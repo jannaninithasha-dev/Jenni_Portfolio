@@ -3376,7 +3376,7 @@ function _makeRemoveBtn(type, id) {
 
 /* removeCert and removeWork are top-level so _makeRemoveBtn can call them.
    They use getElementById lazily — safe because DOM is ready before any user clicks. */
-function removeCert(id) {
+async function removeCert(id) {
   if (!isOwner) return;
   const gallery = document.getElementById('certsGallery');
   const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
@@ -3387,15 +3387,19 @@ function removeCert(id) {
   try { localStorage.setItem('jn_certificates', JSON.stringify(data)); } catch (e) { console.warn('removeCert local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
-    api.writeBin(api.cloudConfig.certBinId, data.map(({ id: itemId, name, type, url }) => ({
-      id: itemId, name, type, url
-    })))
-      .catch(e => console.warn('removeCert save failed', e));
+    try {
+      await api.writeBin(api.cloudConfig.certBinId, data.map(({ id: itemId, name, type, url }) => ({
+        id: itemId, name, type, url
+      })));
+    } catch (e) {
+      console.warn('removeCert save failed', e);
+      showToast('Certificate removed locally, but shared delete failed.');
+    }
   }
   syncGalleryEmptyState(gallery, '.cert-item', document.getElementById('certEmptyState'));
 }
 
-function removeWork(id) {
+async function removeWork(id) {
   if (!isOwner) return;
   const gallery = document.getElementById('workGallery');
   const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
@@ -3406,8 +3410,12 @@ function removeWork(id) {
   try { localStorage.setItem('jn_work_samples', JSON.stringify(data)); } catch (e) { console.warn('removeWork local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
-    api.writeBin(api.cloudConfig.workBinId, data.map(({ id: itemId, name, type, badge, url }) => ({ id: itemId, name, type, badge, url })))
-      .catch(e => console.warn('removeWork save failed', e));
+    try {
+      await api.writeBin(api.cloudConfig.workBinId, data.map(({ id: itemId, name, type, badge, url }) => ({ id: itemId, name, type, badge, url })));
+    } catch (e) {
+      console.warn('removeWork save failed', e);
+      showToast('Work sample removed locally, but shared delete failed.');
+    }
   }
   syncGalleryEmptyState(gallery, '.work-item', document.getElementById('workEmptyState'));
 }
