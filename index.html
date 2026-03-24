@@ -2153,21 +2153,78 @@ function syncWorkEmptyState() {
   syncGalleryEmptyState(workGallery, '.work-item', document.getElementById('workEmptyState'));
 }
 
+function canonicaliseAssetUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (!/^https?:\/\//i.test(raw)) return raw;
+  try {
+    const url = new URL(raw);
+    url.hash = '';
+    url.search = '';
+    url.protocol = 'https:';
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return raw.replace(/[?#].*$/, '').replace(/^http:\/\//i, 'https://').replace(/\/$/, '');
+  }
+}
+
+function certEntryFingerprint(entry) {
+  if (!entry) return '';
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase(),
+    canonicaliseAssetUrl(entry.url || entry.dataUrl || '')
+  ].join('|');
+}
+
+function workEntryFingerprint(entry) {
+  if (!entry) return '';
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase(),
+    String(entry.badge || '').trim().toLowerCase(),
+    canonicaliseAssetUrl(entry.url || entry.dataUrl || '')
+  ].join('|');
+}
+
+function dedupeEntries(entries, fingerprintFn) {
+  const list = Array.isArray(entries) ? entries : [];
+  const seen = new Set();
+  const deduped = [];
+  list.forEach(entry => {
+    const key = fingerprintFn(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    deduped.push(entry);
+  });
+  return deduped;
+}
+
+function mergeEntries(rawEntries, normalizeEntry, fingerprintFn, remoteRawEntries = []) {
+  const entries = [];
+  const remoteEntries = [];
+  const seen = new Set();
+  const remoteSet = new Set(Array.isArray(remoteRawEntries) ? remoteRawEntries : []);
+
+  (Array.isArray(rawEntries) ? rawEntries : []).forEach(raw => {
+    const entry = normalizeEntry(raw);
+    if (!entry) return;
+    const key = fingerprintFn(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    entries.push(entry);
+    if (remoteSet.has(raw)) remoteEntries.push(entry);
+  });
+
+  return { entries, remoteEntries };
+}
+
 function sameCertEntry(a, b) {
-  return !!a && !!b &&
-    String(a.id || '') === String(b.id || '') &&
-    String(a.name || '') === String(b.name || '') &&
-    String(a.type || '') === String(b.type || '') &&
-    String(a.url || a.dataUrl || '') === String(b.url || b.dataUrl || '');
+  return certEntryFingerprint(a) === certEntryFingerprint(b);
 }
 
 function sameWorkEntry(a, b) {
-  return !!a && !!b &&
-    String(a.id || '') === String(b.id || '') &&
-    String(a.name || '') === String(b.name || '') &&
-    String(a.type || '') === String(b.type || '') &&
-    String(a.badge || '') === String(b.badge || '') &&
-    String(a.url || a.dataUrl || '') === String(b.url || b.dataUrl || '');
+  return workEntryFingerprint(a) === workEntryFingerprint(b);
 }
 
 function getDownloadBaseName(name, fallback = 'certificate') {
@@ -2254,7 +2311,7 @@ function collectCertEntries() {
       previewUrl: item.dataset.previewUrl || ''
     });
   });
-  return data;
+  return dedupeEntries(data, certEntryFingerprint);
 }
 
 function inferWorkType(entry, source) {
@@ -2298,7 +2355,25 @@ function collectWorkEntries() {
       url    : source
     });
   });
-  return data;
+  return dedupeEntries(data, workEntryFingerprint);
+}
+
+function renderCertEntries(entries) {
+  clearGalleryItems(certsGallery, '.cert-item');
+  certCount = 0;
+  (Array.isArray(entries) ? entries : []).forEach(entry => {
+    certCount++;
+    _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl);
+  });
+}
+
+function renderWorkEntries(entries) {
+  clearGalleryItems(workGallery, '.work-item');
+  workCount = 0;
+  (Array.isArray(entries) ? entries : []).forEach(entry => {
+    workCount++;
+    _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url);
+  });
 }
 
 /* ── CERT STORAGE ── */
@@ -2325,6 +2400,15 @@ async function loadCertsFromStorage() {
   let remoteLoaded = false;
 
   setGalleryLoading(certsGallery, true);
+  try { localData = JSON.parse(localStorage.getItem('jn_certificates') || '[]'); } catch { localData = []; }
+  localData = Array.isArray(localData) ? localData : [];
+
+  const localMerge = mergeEntries(localData, normaliseCertEntry, certEntryFingerprint);
+  if (localMerge.entries.length) {
+    renderCertEntries(localMerge.entries);
+    setGalleryLoading(certsGallery, false);
+    syncCertEmptyState();
+  }
 
   try {
     remoteData = await readBin(CLOUD_CONFIG.certBinId);
@@ -2332,32 +2416,17 @@ async function loadCertsFromStorage() {
   } catch (e) {
     console.warn('Cert load sync failed:', e);
   }
-  try { localData = JSON.parse(localStorage.getItem('jn_certificates') || '[]'); } catch { localData = []; }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
-  localData  = Array.isArray(localData) ? localData : [];
+  const { entries, remoteEntries } = mergeEntries(
+    [...remoteData, ...localData],
+    normaliseCertEntry,
+    certEntryFingerprint,
+    remoteData
+  );
 
-  clearGalleryItems(certsGallery, '.cert-item');
-  certCount = 0;
-
-  const remoteEntries = [];
-  const mergedSource  = [...remoteData, ...localData];
-  const entries = [];
-  const seen    = new Set();
-  mergedSource.forEach(raw => {
-    const entry = normaliseCertEntry(raw);
-    if (!entry) return;
-    const key = entry.url || entry.dataUrl || entry.id;
-    if (seen.has(key)) return;
-    seen.add(key);
-    entries.push(entry);
-    if (remoteData.includes(raw)) remoteEntries.push(entry);
-  });
-
-  entries.forEach(entry => {
-    certCount++;
-    _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl);
-  });
+  renderCertEntries(entries);
   const needsRemoteSync = remoteLoaded && (
+    remoteData.length !== remoteEntries.length ||
     entries.length !== remoteEntries.length ||
     entries.some(entry => !remoteEntries.some(remoteEntry => sameCertEntry(entry, remoteEntry)))
   );
@@ -2913,6 +2982,15 @@ async function loadWorkFromStorage() {
   let remoteLoaded = false;
 
   setGalleryLoading(workGallery, true);
+  try { localData = JSON.parse(localStorage.getItem('jn_work_samples') || '[]'); } catch { localData = []; }
+  localData = Array.isArray(localData) ? localData : [];
+
+  const localMerge = mergeEntries(localData, normaliseWorkEntry, workEntryFingerprint);
+  if (localMerge.entries.length) {
+    renderWorkEntries(localMerge.entries);
+    setGalleryLoading(workGallery, false);
+    syncWorkEmptyState();
+  }
 
   try {
     remoteData = await readBin(CLOUD_CONFIG.workBinId);
@@ -2920,32 +2998,17 @@ async function loadWorkFromStorage() {
   } catch (e) {
     console.warn('Work load sync failed:', e);
   }
-  try { localData = JSON.parse(localStorage.getItem('jn_work_samples') || '[]'); } catch { localData = []; }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
-  localData  = Array.isArray(localData) ? localData : [];
+  const { entries, remoteEntries } = mergeEntries(
+    [...remoteData, ...localData],
+    normaliseWorkEntry,
+    workEntryFingerprint,
+    remoteData
+  );
 
-  clearGalleryItems(workGallery, '.work-item');
-  workCount = 0;
-
-  const remoteEntries = [];
-  const mergedSource  = [...remoteData, ...localData];
-  const entries = [];
-  const seen    = new Set();
-  mergedSource.forEach(raw => {
-    const entry = normaliseWorkEntry(raw);
-    if (!entry) return;
-    const key = entry.url || entry.dataUrl || entry.id;
-    if (seen.has(key)) return;
-    seen.add(key);
-    entries.push(entry);
-    if (remoteData.includes(raw)) remoteEntries.push(entry);
-  });
-
-  entries.forEach(entry => {
-    workCount++;
-    _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url);
-  });
+  renderWorkEntries(entries);
   const needsRemoteSync = remoteLoaded && (
+    remoteData.length !== remoteEntries.length ||
     entries.length !== remoteEntries.length ||
     entries.some(entry => !remoteEntries.some(remoteEntry => sameWorkEntry(entry, remoteEntry)))
   );
@@ -3315,28 +3378,12 @@ function _makeRemoveBtn(type, id) {
    They use getElementById lazily — safe because DOM is ready before any user clicks. */
 function removeCert(id) {
   if (!isOwner) return;
-  if (!/^[0-9a-f-]{32,36}$/.test(id)) return;
   const gallery = document.getElementById('certsGallery');
   const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
   if (el) el.remove();
   /* Update storage */
-  const items = gallery ? gallery.querySelectorAll('.cert-item[data-id]') : [];
-  const data = [];
-  items.forEach(item => {
-    const nameEl = item.querySelector('.cert-name');
-    const source = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
-    if (!nameEl) return;
-    if (!source) return;
-    data.push({
-      id     : item.dataset.id,
-      name   : nameEl.textContent,
-      type   : item.dataset.certType || 'image',
-      dataUrl: source,
-      url    : source,
-      previewUrl: item.dataset.previewUrl || ''
-    });
-  });
-  certCount = items.length;
+  const data = collectCertEntries();
+  certCount = data.length;
   try { localStorage.setItem('jn_certificates', JSON.stringify(data)); } catch (e) { console.warn('removeCert local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
@@ -3350,28 +3397,12 @@ function removeCert(id) {
 
 function removeWork(id) {
   if (!isOwner) return;
-  if (!/^[0-9a-f-]{32,36}$/.test(id)) return;
   const gallery = document.getElementById('workGallery');
   const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
   if (el) el.remove();
   /* Update storage */
-  const items = gallery ? gallery.querySelectorAll('.work-item[data-id]') : [];
-  const data = [];
-  items.forEach(item => {
-    const titleEl = item.querySelector('.work-title');
-    const source  = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
-    if (!titleEl) return;
-    if (!source) return;
-    data.push({
-      id     : item.dataset.id,
-      name   : titleEl.textContent,
-      type   : item.dataset.workType || 'video',
-      badge  : item.dataset.workBadge || 'Work Sample',
-      dataUrl: source,
-      url    : source
-    });
-  });
-  workCount = items.length;
+  const data = collectWorkEntries();
+  workCount = data.length;
   try { localStorage.setItem('jn_work_samples', JSON.stringify(data)); } catch (e) { console.warn('removeWork local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
