@@ -2153,6 +2153,15 @@ function syncWorkEmptyState() {
   syncGalleryEmptyState(workGallery, '.work-item', document.getElementById('workEmptyState'));
 }
 
+function readStoredList(key) {
+  try {
+    const data = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
 function canonicaliseAssetUrl(value) {
   const raw = String(value || '').trim();
   if (!raw) return '';
@@ -2400,8 +2409,7 @@ async function loadCertsFromStorage() {
   let remoteLoaded = false;
 
   setGalleryLoading(certsGallery, true);
-  try { localData = JSON.parse(localStorage.getItem('jn_certificates') || '[]'); } catch { localData = []; }
-  localData = Array.isArray(localData) ? localData : [];
+  localData = readStoredList('jn_certificates');
 
   const localMerge = mergeEntries(localData, normaliseCertEntry, certEntryFingerprint);
   if (localMerge.entries.length) {
@@ -2417,6 +2425,7 @@ async function loadCertsFromStorage() {
     console.warn('Cert load sync failed:', e);
   }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
+  localData = readStoredList('jn_certificates');
   const { entries, remoteEntries } = mergeEntries(
     [...remoteData, ...localData],
     normaliseCertEntry,
@@ -2982,8 +2991,7 @@ async function loadWorkFromStorage() {
   let remoteLoaded = false;
 
   setGalleryLoading(workGallery, true);
-  try { localData = JSON.parse(localStorage.getItem('jn_work_samples') || '[]'); } catch { localData = []; }
-  localData = Array.isArray(localData) ? localData : [];
+  localData = readStoredList('jn_work_samples');
 
   const localMerge = mergeEntries(localData, normaliseWorkEntry, workEntryFingerprint);
   if (localMerge.entries.length) {
@@ -2999,6 +3007,7 @@ async function loadWorkFromStorage() {
     console.warn('Work load sync failed:', e);
   }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
+  localData = readStoredList('jn_work_samples');
   const { entries, remoteEntries } = mergeEntries(
     [...remoteData, ...localData],
     normaliseWorkEntry,
