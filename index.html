@@ -756,6 +756,7 @@
     color: var(--muted);
   }
   .cert-empty-sub { font-size: 11px; color: var(--muted); opacity: 0.6; letter-spacing: 1px; }
+  .certs-gallery[data-loading="true"] .cert-empty-state { display: none !important; }
 
   .cert-item {
     background: var(--card);
@@ -961,6 +962,7 @@
     color: var(--muted);
   }
   .work-empty-sub { font-size: 11px; color: var(--muted); opacity: 0.6; letter-spacing: 1px; }
+  .work-gallery[data-loading="true"] .work-empty-state { display: none !important; }
 
   /* Work card — matches cert-item layout */
   .work-item {
@@ -1627,7 +1629,7 @@
     <button class="upload-btn" id="certBrowseBtn">Browse Files</button>
   </div>
   </div>
-  <div class="certs-gallery" id="certsGallery">
+  <div class="certs-gallery" id="certsGallery" data-loading="true">
     <!-- Empty state shown to visitors when no certs uploaded yet -->
     <div class="cert-empty-state" id="certEmptyState">
       <div class="cert-empty-icon">🏆</div>
@@ -1653,7 +1655,7 @@
     <button class="upload-btn" id="workBrowseBtn" style="border-color: var(--accent2); color: var(--accent2);">Add Work Sample</button>
   </div>
   </div>
-  <div class="work-gallery" id="workGallery">
+  <div class="work-gallery" id="workGallery" data-loading="true">
     <div class="work-empty-state" id="workEmptyState">
       <div class="work-empty-icon">🎬</div>
       <div class="work-empty-title">Work Samples Coming Soon</div>
@@ -2129,8 +2131,17 @@ function clearGalleryItems(galleryEl, itemSelector) {
   galleryEl.querySelectorAll(itemSelector).forEach(el => el.remove());
 }
 
+function setGalleryLoading(galleryEl, isLoading) {
+  if (!galleryEl) return;
+  galleryEl.dataset.loading = isLoading ? 'true' : 'false';
+}
+
 function syncGalleryEmptyState(galleryEl, itemSelector, emptyStateEl) {
   if (!galleryEl || !emptyStateEl) return;
+  if (galleryEl.dataset.loading === 'true') {
+    emptyStateEl.style.display = 'none';
+    return;
+  }
   emptyStateEl.style.display = galleryEl.querySelector(itemSelector) ? 'none' : 'flex';
 }
 
@@ -2140,6 +2151,23 @@ function syncCertEmptyState() {
 
 function syncWorkEmptyState() {
   syncGalleryEmptyState(workGallery, '.work-item', document.getElementById('workEmptyState'));
+}
+
+function sameCertEntry(a, b) {
+  return !!a && !!b &&
+    String(a.id || '') === String(b.id || '') &&
+    String(a.name || '') === String(b.name || '') &&
+    String(a.type || '') === String(b.type || '') &&
+    String(a.url || a.dataUrl || '') === String(b.url || b.dataUrl || '');
+}
+
+function sameWorkEntry(a, b) {
+  return !!a && !!b &&
+    String(a.id || '') === String(b.id || '') &&
+    String(a.name || '') === String(b.name || '') &&
+    String(a.type || '') === String(b.type || '') &&
+    String(a.badge || '') === String(b.badge || '') &&
+    String(a.url || a.dataUrl || '') === String(b.url || b.dataUrl || '');
 }
 
 function getDownloadBaseName(name, fallback = 'certificate') {
@@ -2296,6 +2324,8 @@ async function loadCertsFromStorage() {
   let localData  = [];
   let remoteLoaded = false;
 
+  setGalleryLoading(certsGallery, true);
+
   try {
     remoteData = await readBin(CLOUD_CONFIG.certBinId);
     remoteLoaded = true;
@@ -2309,23 +2339,29 @@ async function loadCertsFromStorage() {
   clearGalleryItems(certsGallery, '.cert-item');
   certCount = 0;
 
-  const primarySource = (remoteLoaded && remoteData.length) ? remoteData : localData;
+  const remoteEntries = [];
+  const mergedSource  = [...remoteData, ...localData];
   const entries = [];
   const seen    = new Set();
-  primarySource.forEach(raw => {
+  mergedSource.forEach(raw => {
     const entry = normaliseCertEntry(raw);
     if (!entry) return;
     const key = entry.url || entry.dataUrl || entry.id;
     if (seen.has(key)) return;
     seen.add(key);
     entries.push(entry);
+    if (remoteData.includes(raw)) remoteEntries.push(entry);
   });
 
   entries.forEach(entry => {
     certCount++;
     _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl);
   });
-  if (remoteLoaded && !remoteData.length && entries.length) {
+  const needsRemoteSync = remoteLoaded && (
+    entries.length !== remoteEntries.length ||
+    entries.some(entry => !remoteEntries.some(remoteEntry => sameCertEntry(entry, remoteEntry)))
+  );
+  if (needsRemoteSync) {
     try {
       await writeBin(CLOUD_CONFIG.certBinId, entries.map(({ id, name, type, url }) => ({ id, name, type, url })));
     } catch (e) {
@@ -2335,6 +2371,7 @@ async function loadCertsFromStorage() {
   if (remoteLoaded || entries.length) {
     try { localStorage.setItem('jn_certificates', JSON.stringify(entries)); } catch {}
   }
+  setGalleryLoading(certsGallery, false);
   syncCertEmptyState();
 }
 
@@ -2875,6 +2912,8 @@ async function loadWorkFromStorage() {
   let localData  = [];
   let remoteLoaded = false;
 
+  setGalleryLoading(workGallery, true);
+
   try {
     remoteData = await readBin(CLOUD_CONFIG.workBinId);
     remoteLoaded = true;
@@ -2888,23 +2927,29 @@ async function loadWorkFromStorage() {
   clearGalleryItems(workGallery, '.work-item');
   workCount = 0;
 
-  const primarySource = (remoteLoaded && remoteData.length) ? remoteData : localData;
+  const remoteEntries = [];
+  const mergedSource  = [...remoteData, ...localData];
   const entries = [];
   const seen    = new Set();
-  primarySource.forEach(raw => {
+  mergedSource.forEach(raw => {
     const entry = normaliseWorkEntry(raw);
     if (!entry) return;
     const key = entry.url || entry.dataUrl || entry.id;
     if (seen.has(key)) return;
     seen.add(key);
     entries.push(entry);
+    if (remoteData.includes(raw)) remoteEntries.push(entry);
   });
 
   entries.forEach(entry => {
     workCount++;
     _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url);
   });
-  if (remoteLoaded && !remoteData.length && entries.length) {
+  const needsRemoteSync = remoteLoaded && (
+    entries.length !== remoteEntries.length ||
+    entries.some(entry => !remoteEntries.some(remoteEntry => sameWorkEntry(entry, remoteEntry)))
+  );
+  if (needsRemoteSync) {
     try {
       await writeBin(CLOUD_CONFIG.workBinId, entries.map(({ id, name, type, badge, url }) => ({ id, name, type, badge, url })));
     } catch (e) {
@@ -2914,6 +2959,7 @@ async function loadWorkFromStorage() {
   if (remoteLoaded || entries.length) {
     try { localStorage.setItem('jn_work_samples', JSON.stringify(entries)); } catch {}
   }
+  setGalleryLoading(workGallery, false);
   syncWorkEmptyState();
 }
 
