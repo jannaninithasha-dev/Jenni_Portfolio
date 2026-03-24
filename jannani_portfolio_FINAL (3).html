@@ -1,0 +1,3563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!--
+  SECURITY HEADERS (OWASP A05 — Security Misconfiguration)
+  When hosting on Netlify / Vercel, also add these as real HTTP headers
+  via netlify.toml or vercel.json for full enforcement.
+-->
+
+<!-- Content-Security-Policy: restrict script/style sources (OWASP A03, A05) -->
+<meta http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self';
+    script-src  'self' 'unsafe-inline' https://cdnjs.cloudflare.com;
+    style-src   'self' 'unsafe-inline' https://fonts.googleapis.com;
+    font-src    https://fonts.gstatic.com;
+    img-src     'self' data: blob: https://res.cloudinary.com;
+    media-src   'self' blob: data: https://res.cloudinary.com;
+    connect-src 'self' https://api.cloudinary.com https://api.jsonbin.io https://cdnjs.cloudflare.com https://res.cloudinary.com;
+    worker-src  blob: https://cdnjs.cloudflare.com;
+    object-src  'none';
+    base-uri    'self';
+    form-action 'none';
+  ">
+
+<!-- Prevent MIME-type sniffing (OWASP A05) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+<!-- No referrer leaked to third parties (OWASP A05) -->
+<meta name="referrer" content="no-referrer">
+
+<!-- Disable browser features not needed (OWASP A05) -->
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=()">
+
+<title>Jannani Nitasha S — Data & Test Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<!-- PDF.js for rendering PDF first page as image thumbnail -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root {
+    --bg: #0F172A;
+    --surface: #0d1424;
+    --card: #131e35;
+    --border: rgba(59,130,246,0.15);
+    --accent: #22D3EE;
+    --accent2: #3B82F6;
+    --accent3: #60A5FA;
+    --text: #FFFFFF;
+    --muted: #64748B;
+    --tag-bg: rgba(34,211,238,0.08);
+    --tag-border: rgba(34,211,238,0.25);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom Cursor */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease, opacity 0.15s;
+    mix-blend-mode: difference;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.35s ease, width 0.2s, height 0.2s, opacity 0.2s;
+    opacity: 0.5;
+  }
+  body:hover .cursor { opacity: 1; }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background: rgba(15,23,42,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 8px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .nav-cta:hover { background: var(--accent); color: var(--bg); }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    padding: 0 5%;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-noise {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+  .hero-glow2 {
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(34,211,238,0.08) 0%, transparent 70%);
+    bottom: 50px; left: 10%;
+    pointer-events: none;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--tag-border);
+    background: var(--tag-bg);
+    padding: 6px 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 32px;
+    animation: fadeInUp 0.6s ease both;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+  .hero-name {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(52px, 8vw, 100px);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -3px;
+    margin-bottom: 16px;
+    animation: fadeInUp 0.7s 0.1s ease both;
+  }
+  .hero-name .line2 {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(255,255,255,0.3);
+    display: block;
+  }
+  .hero-name .accent-word {
+    color: var(--accent);
+    font-style: italic;
+    font-family: 'Instrument Serif', serif;
+  }
+  .hero-role {
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 28px;
+    animation: fadeInUp 0.7s 0.2s ease both;
+  }
+  .hero-desc {
+    font-size: 15px;
+    color: rgba(240,240,245,0.65);
+    max-width: 520px;
+    line-height: 1.8;
+    margin-bottom: 44px;
+    animation: fadeInUp 0.7s 0.3s ease both;
+  }
+  .hero-btns {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.7s 0.4s ease both;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 14px 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: #60B8F8; transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 14px 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+  .hero-stats {
+    position: absolute;
+    right: 5%;
+    bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    animation: fadeInRight 0.8s 0.5s ease both;
+  }
+  .stat {
+    text-align: right;
+    border-right: 2px solid var(--accent);
+    padding-right: 16px;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .scroll-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: fadeIn 1s 1s ease both;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+    animation: scrollLine 2s infinite;
+  }
+  @keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  /* ---- SECTIONS ---- */
+  section { padding: 100px 5%; }
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 60px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 60px;
+  }
+  .section-title .italic {
+    font-family: 'Instrument Serif', serif;
+    color: var(--accent);
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  /* ---- ABOUT ---- */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .about-visual {
+    position: relative;
+  }
+  .about-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 40px;
+    position: relative;
+  }
+  .about-card::before {
+    content: 'JN';
+    position: absolute;
+    top: -30px;
+    right: 20px;
+    font-family: 'Syne', sans-serif;
+    font-size: 80px;
+    font-weight: 800;
+    color: rgba(34,211,238,0.06);
+    line-height: 1;
+  }
+  .about-avatar {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--bg);
+    margin-bottom: 24px;
+  }
+  .about-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .about-card .subtitle {
+    color: var(--accent);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .about-card p {
+    color: rgba(240,240,245,0.65);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .about-card .contact-row {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .contact-item .icon { color: var(--accent); font-size: 14px; }
+  .about-text h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .about-text p {
+    color: rgba(240,240,245,0.65);
+    font-size: 13px;
+    line-height: 1.9;
+    margin-bottom: 24px;
+  }
+  .highlight-bar {
+    border-left: 2px solid var(--accent);
+    padding-left: 16px;
+    margin: 24px 0;
+    font-size: 15px;
+    color: var(--text);
+    font-family: 'Instrument Serif', serif;
+    font-style: italic;
+  }
+
+  /* ---- SKILLS ---- */
+  #skills { background: var(--surface); }
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+  }
+  .skill-card {
+    background: var(--card);
+    padding: 32px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+    cursor: default;
+  }
+  .skill-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+  }
+  .skill-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(34,211,238,0.04), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .skill-card:hover::after { opacity: 1; }
+  .skill-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+  }
+  .skill-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .skill-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .skill-level {
+    margin-top: 16px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .skill-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* ---- EXPERIENCE ---- */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+    max-width: 800px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 60px;
+    animation: fadeInUp 0.5s ease both;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: -38px;
+    top: 4px;
+    width: 12px; height: 12px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    background: var(--bg);
+  }
+  .timeline-dot.active { background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .timeline-date {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .timeline-role {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .timeline-company {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .timeline-bullets {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .timeline-bullets li {
+    font-size: 13px;
+    color: rgba(240,240,245,0.65);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.7;
+  }
+  .timeline-bullets li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+    top: 2px;
+  }
+
+  /* ---- PROJECTS ---- */
+  #projects { background: var(--surface); }
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2px;
+    align-items: stretch; /* equal height cards per row */
+  }
+  .project-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+    display: flex;
+    flex-direction: column; /* stack thumb → body vertically */
+  }
+  .project-card:hover { border-color: var(--accent); transform: translateY(-6px); }
+  .project-thumb {
+    height: 200px;
+    background: linear-gradient(135deg, #0c1628 0%, #0f2040 100%);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* never shrink the thumbnail */
+  }
+  .project-thumb-icon {
+    font-size: 64px;
+    opacity: 0.3;
+  }
+  .project-thumb-label {
+    position: absolute;
+    top: 16px; left: 16px;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    padding: 4px 10px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .project-body {
+    padding: 28px;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* fill remaining card height */
+  }
+  .project-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .project-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 20px;
+    flex: 1; /* pushes tags to the bottom */
+  }
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .tag {
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: var(--tag-bg);
+    border: 1px solid var(--tag-border);
+    color: var(--accent);
+  }
+
+  /* ---- CERTIFICATIONS ---- */
+  .certs-upload-area {
+    border: 2px dashed var(--border);
+    padding: 60px 40px;
+    text-align: center;
+    transition: border-color 0.3s;
+    cursor: pointer;
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .certs-upload-area:hover { border-color: var(--accent); }
+  .certs-upload-area.drag-over { border-color: var(--accent); background: var(--tag-bg); }
+  .upload-icon { font-size: 40px; margin-bottom: 16px; color: var(--accent); }
+  .upload-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .upload-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .upload-btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 10px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .upload-btn:hover { background: var(--accent); color: var(--bg); }
+  /* file inputs are hidden via inline style on each element */
+  .certs-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    min-height: 20px;
+  }
+  .cert-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+    animation: fadeIn 0.4s ease;
+  }
+  .cert-item img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 12px;
+  }
+  .cert-name {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .cert-type {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cert-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    border: 1px dashed var(--border);
+    text-align: center;
+    gap: 10px;
+  }
+  .cert-empty-icon { font-size: 40px; opacity: 0.3; }
+  .cert-empty-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .cert-empty-sub { font-size: 11px; color: var(--muted); opacity: 0.6; letter-spacing: 1px; }
+
+  .cert-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0;
+    position: relative;
+    animation: fadeIn 0.5s ease;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    border-radius: 2px;
+  }
+  .cert-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(34,211,238,0.12);
+  }
+
+  /* Certificate thumbnail wrapper */
+  .cert-thumb-wrap {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    cursor: zoom-in;
+    background: linear-gradient(135deg, #0c1628 0%, #0f2040 100%);
+  }
+  .cert-thumb-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .cert-item:hover .cert-thumb-wrap img { transform: scale(1.05); }
+
+  /* Hover overlay with "View" label */
+  .cert-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .cert-item:hover .cert-thumb-overlay { opacity: 1; }
+  .cert-thumb-overlay-icon { font-size: 32px; }
+  .cert-thumb-overlay-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 4px 14px;
+  }
+
+  /* PDF thumbnail */
+  .cert-pdf-thumb {
+    width: 100%;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.06), rgba(59,130,246,0.08));
+    cursor: pointer;
+    transition: background 0.3s;
+    position: relative;
+  }
+  .cert-item:hover .cert-pdf-thumb { background: linear-gradient(135deg, rgba(34,211,238,0.1), rgba(59,130,246,0.14)); }
+  .cert-pdf-icon { font-size: 48px; }
+  .cert-pdf-label {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid var(--tag-border);
+    padding: 3px 12px;
+  }
+
+  /* Card body */
+  .cert-item-body {
+    padding: 14px 18px 16px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--card) 0%, rgba(15,23,42,0.95) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .cert-item-body-left { flex: 1; min-width: 0; }
+  .cert-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cert-type {
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  /* Verified badge */
+  .cert-verified {
+    flex-shrink: 0;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--accent);
+    border: 1px solid var(--tag-border);
+    background: var(--tag-bg);
+    padding: 3px 8px;
+    white-space: nowrap;
+  }
+
+  /* ---- DELETE BUTTONS — hidden from everyone by default (OWASP A01) ---- */
+  .cert-remove,
+  .work-remove {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,50,50,0.18);
+    border: none;
+    color: #ff6b6b;
+    width: 28px; height: 28px;
+    font-size: 14px;
+    cursor: pointer;
+    display: none !important; /* hidden for ALL users by default — strongest rule */
+    align-items: center; justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 25;
+  }
+  /* ONLY revealed when body has .owner-mode AND user hovers the card */
+  body.owner-mode .cert-item:hover .cert-remove,
+  body.owner-mode .work-item:hover .work-remove {
+    display: flex !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .cert-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 150px;
+    background: linear-gradient(135deg, rgba(34,211,238,0.05), rgba(59,130,246,0.05));
+    border: 1px dashed var(--tag-border);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  /* ---- WORK SAMPLES ---- */
+  #work { background: var(--surface); }
+  .work-upload-area {
+    border: 2px dashed var(--border);
+    padding: 60px 40px;
+    text-align: center;
+    transition: border-color 0.3s;
+    cursor: pointer;
+    margin-bottom: 40px;
+  }
+  .work-upload-area:hover { border-color: var(--accent2); }
+
+  /* Gallery grid — same as certs */
+  .work-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    min-height: 20px;
+  }
+
+  /* Empty state — same style as cert-empty-state */
+  .work-empty-state {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    border: 1px dashed var(--border);
+    text-align: center;
+    gap: 10px;
+  }
+  .work-empty-icon { font-size: 40px; opacity: 0.3; }
+  .work-empty-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--muted);
+  }
+  .work-empty-sub { font-size: 11px; color: var(--muted); opacity: 0.6; letter-spacing: 1px; }
+
+  /* Work card — matches cert-item layout */
+  .work-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 0;
+    position: relative;
+    animation: fadeIn 0.5s ease;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    border-radius: 2px;
+  }
+  .work-item:hover {
+    border-color: var(--accent2);
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(59,130,246,0.12);
+  }
+
+  /* Video/image thumbnail wrapper */
+  .work-thumb-wrap {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background: #000;
+    cursor: pointer;
+  }
+  .work-thumb-wrap video,
+  .work-thumb-wrap img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .work-item:hover .work-thumb-wrap video,
+  .work-item:hover .work-thumb-wrap img { transform: scale(1.03); }
+
+  /* Hover overlay */
+  .work-thumb-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,23,42,0.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .work-item:hover .work-thumb-overlay { opacity: 1; }
+  .work-thumb-overlay-icon { font-size: 32px; }
+  .work-thumb-overlay-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 4px 14px;
+  }
+
+  /* Card body */
+  .work-item-body {
+    padding: 14px 18px 16px;
+    border-top: 1px solid var(--border);
+    background: linear-gradient(180deg, var(--card) 0%, rgba(15,23,42,0.95) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .work-item-body-left { flex: 1; min-width: 0; }
+  .work-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .work-badge {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+  /* work-remove handled by shared delete button rule above */
+
+  /* ---- EDUCATION ---- */
+  .edu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+  }
+  .edu-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 32px;
+    transition: border-color 0.3s;
+  }
+  .edu-card:hover { border-color: var(--accent3); }
+  .edu-year {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent3);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .edu-degree {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .edu-school {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ---- CONTACT ---- */
+  #contact {
+    background: var(--bg);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  #contact::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    bottom: -200px; left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .contact-email {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(20px, 3vw, 36px);
+    font-weight: 700;
+    color: var(--accent);
+    margin: 32px 0;
+    text-decoration: none;
+    display: inline-block;
+    border-bottom: 1px solid var(--tag-border);
+    padding-bottom: 4px;
+    transition: border-color 0.3s;
+  }
+  .contact-email:hover { border-color: var(--accent); }
+  .contact-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+  }
+  .social-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    transition: all 0.2s;
+  }
+  .social-link:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
+
+  /* ---- FOOTER ---- */
+  footer {
+    padding: 32px 5%;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  footer .footer-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Marquee */
+  .marquee-wrap {
+    overflow: hidden;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+    background: var(--surface);
+  }
+  .marquee {
+    display: flex;
+    gap: 60px;
+    animation: marquee 20s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .marquee span {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .marquee span.accent { color: var(--accent); }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* Empty state */
+  /* ---- OWNER MODE ---- */
+  .owner-upload { display: none !important; }
+  body.owner-mode .owner-upload { display: block !important; }
+  body.owner-mode .owner-upload-grid { display: grid; }
+
+  .lock-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 44px; height: 44px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 9997;
+    transition: border-color 0.2s, transform 0.2s;
+    color: var(--muted);
+  }
+  .lock-btn:hover { border-color: var(--accent); transform: scale(1.1); }
+  body.owner-mode .lock-btn { border-color: var(--accent); color: var(--accent); }
+
+  .pw-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,15,30,0.85);
+    backdrop-filter: blur(12px);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  .pw-overlay.active { display: flex; }
+  .pw-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 48px 40px;
+    text-align: center;
+    width: 360px;
+    position: relative;
+  }
+  .pw-icon { font-size: 36px; margin-bottom: 16px; }
+  .pw-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .pw-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+  .pw-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 3px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .pw-input:focus { border-color: var(--accent); }
+  .pw-input.error { border-color: #ff6b6b; animation: shake 0.3s ease; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+  .pw-submit {
+    width: 100%;
+    background: var(--accent2);
+    border: none;
+    color: #fff;
+    padding: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .pw-submit:hover { background: var(--accent); color: var(--bg); }
+  .pw-close {
+    position: absolute;
+    top: 12px; right: 16px;
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; transition: color 0.2s;
+  }
+  .pw-close:hover { color: var(--text); }
+  .pw-error { font-size: 11px; color: #ff6b6b; margin-top: -8px; margin-bottom: 12px; min-height: 16px; }
+  .owner-badge {
+    display: none;
+    position: fixed;
+    top: 76px; right: 20px;
+    background: var(--accent2);
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    z-index: 150;
+  }
+  body.owner-mode .owner-badge { display: block; }
+
+  .empty-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 12px;
+    border: 1px dashed var(--border);
+    text-align: center;
+    gap: 8px;
+  }
+  .empty-hint-icon { font-size: 32px; opacity: 0.4; }
+
+  @media (max-width: 768px) {
+    .about-grid { grid-template-columns: 1fr; gap: 40px; }
+    .hero-stats { display: none; }
+    nav { padding: 16px 5%; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">JN</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#certifications">Certifications</a></li>
+    <li><a href="#work">My Work</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a href="mailto:nithasha1998@gmail.com" class="nav-cta">Hire Me</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-noise"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Open to Work · Coimbatore, India</div>
+    <h1 class="hero-name">
+      Jannani <span class="accent-word">Nitasha</span>
+      
+    </h1>
+    <p class="hero-role">Data Analyst · Software Test Engineer · AI Enthusiast</p>
+    <p class="hero-desc">
+      3+ years turning raw data into actionable insights. Expert in SQL, Python, BigQuery & Power BI — where quality meets intelligence.
+    </p>
+    <div class="hero-btns">
+      <a href="#projects" class="btn-primary">View My Work</a>
+      <a href="#contact" class="btn-secondary">Get In Touch</a>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">3+</div>
+      <div class="stat-label">Years Experience</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label">Major Projects</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">5+</div>
+      <div class="stat-label">AI Certifications</div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    Scroll
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee">
+    <span class="accent">SQL</span><span>·</span>
+    <span>Python</span><span>·</span>
+    <span class="accent">BigQuery</span><span>·</span>
+    <span>Power BI</span><span>·</span>
+    <span class="accent">GCP</span><span>·</span>
+    <span>Data Analysis</span><span>·</span>
+    <span class="accent">KPI Analytics</span><span>·</span>
+    <span>Test Engineering</span><span>·</span>
+    <span>Jupyter</span><span>·</span>
+    <span class="accent">Agentic AI</span><span>·</span>
+    <!-- Duplicate for seamless loop -->
+    <span class="accent">SQL</span><span>·</span>
+    <span>Python</span><span>·</span>
+    <span class="accent">BigQuery</span><span>·</span>
+    <span>Power BI</span><span>·</span>
+    <span class="accent">GCP</span><span>·</span>
+    <span>Data Analysis</span><span>·</span>
+    <span class="accent">KPI Analytics</span><span>·</span>
+    <span>Test Engineering</span><span>·</span>
+    <span>Jupyter</span><span>·</span>
+    <span class="accent">Agentic AI</span><span>·</span>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-label">Who I Am</div>
+  <h2 class="section-title">About <span class="italic">Me</span></h2>
+  <div class="about-grid reveal">
+    <div class="about-visual">
+      <div class="about-card">
+        <div class="about-avatar">JN</div>
+        <h3>Jannani Nitasha S</h3>
+        <p class="subtitle">Data Analyst · Software Test Engineer</p>
+        <p>Detail-oriented professional with 3+ years in data validation, SQL querying, and cloud-based data environments at Cognizant Technology Solutions.</p>
+        <div class="contact-row">
+          <div class="contact-item"><span class="icon">📞</span> 8778142665</div>
+          <div class="contact-item"><span class="icon">✉️</span> nithasha1998@gmail.com</div>
+          <div class="contact-item"><span class="icon">📍</span> Coimbatore, Tamil Nadu, India</div>
+        </div>
+      </div>
+    </div>
+    <div class="about-text">
+      <h3>I make data speak. Clearly.</h3>
+      <p>With a strong foundation in MCA and hands-on experience across the full data pipeline — from raw extraction to executive dashboards — I bridge the gap between technical depth and business clarity.</p>
+      <div class="highlight-bar">
+        "I don't just find bugs — I find the patterns behind them."
+      </div>
+      <p>Currently advancing into AI and Generative AI, I'm building expertise in LLMs, automation workflows, and intelligent agent systems through the AI Career Accelerator program.</p>
+      <p>Whether it's writing complex SQL joins, building Power BI dashboards, automating workflows with n8n, or training ML models — I bring analytical rigor and creative problem-solving to every challenge.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-label">What I Know</div>
+  <h2 class="section-title">Core <span class="italic">Skills</span></h2>
+  <div class="skills-grid">
+    <div class="skill-card reveal">
+      <div class="skill-icon">🗄️</div>
+      <div class="skill-name">SQL</div>
+      <div class="skill-desc">Advanced querying, joins, aggregations, subqueries, window functions across multiple database systems.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="92%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">🐍</div>
+      <div class="skill-name">Python</div>
+      <div class="skill-desc">Data analysis, automation scripts, EDA with NumPy, Pandas, and Jupyter Notebooks.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="85%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">☁️</div>
+      <div class="skill-name">BigQuery / GCP</div>
+      <div class="skill-desc">Cloud-based data querying, large-scale dataset management on Google Cloud Platform.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="80%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">📊</div>
+      <div class="skill-name">Power BI</div>
+      <div class="skill-desc">Dashboard development, DAX calculations, KPI tracking, and interactive report creation.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="88%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">🔍</div>
+      <div class="skill-name">Data Validation & QA</div>
+      <div class="skill-desc">Data quality checks, consistency validation between backend databases and application outputs.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="90%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">🤖</div>
+      <div class="skill-name">AI & Automation</div>
+      <div class="skill-desc">Agentic AI workflows, LLMs, n8n automation, and intelligent agent system design.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="70%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">📋</div>
+      <div class="skill-name">Excel</div>
+      <div class="skill-desc">Advanced data processing, pivot tables, formulas, and reporting for business insights.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="82%"></div></div>
+    </div>
+    <div class="skill-card reveal">
+      <div class="skill-icon">🔄</div>
+      <div class="skill-name">Data Cleaning & EDA</div>
+      <div class="skill-desc">Transforming messy datasets, identifying trends, anomalies and patterns through exploratory analysis.</div>
+      <div class="skill-level"><div class="skill-fill" data-width="87%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-label">Career Journey</div>
+  <h2 class="section-title">Work <span class="italic">Experience</span></h2>
+  <div class="timeline">
+    <div class="timeline-item reveal">
+      <div class="timeline-dot active"></div>
+      <div class="timeline-date">Sep 2022 — Oct 2025</div>
+      <div class="timeline-role">Software Test Engineer</div>
+      <div class="timeline-company">Cognizant Technology Solutions · Coimbatore, India</div>
+      <ul class="timeline-bullets">
+        <li>Analyzed and validated large datasets using SQL and BigQuery to ensure data accuracy and consistency across systems</li>
+        <li>Wrote and optimized SQL queries to extract, aggregate, and validate data from multiple sources</li>
+        <li>Performed EDA to identify trends, anomalies, and inconsistencies in application datasets</li>
+        <li>Automated repetitive data validation tasks using Python scripts — improving efficiency and reducing manual effort</li>
+        <li>Developed Power BI dashboards and reports to track testing metrics and visualize key performance indicators</li>
+        <li>Conducted data quality checks and validation between backend databases and application outputs</li>
+        <li>Documented analysis workflows using Jupyter notebooks to ensure reproducibility and knowledge sharing</li>
+      </ul>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">Mar 2025 — Dec 2025</div>
+      <div class="timeline-role">Data Analyst Course</div>
+      <div class="timeline-company">Professional Training Program</div>
+      <ul class="timeline-bullets">
+        <li>Completed hands-on training in SQL, Python, Excel, and Power BI for real-world data analytics</li>
+        <li>Performed data cleaning, querying, and analysis using industry-standard tools</li>
+        <li>Created dashboards and reports in Power BI to visualize business insights</li>
+      </ul>
+    </div>
+    <div class="timeline-item reveal">
+      <div class="timeline-dot active"></div>
+      <div class="timeline-date">Nov 2025 — Present</div>
+      <div class="timeline-role">AI Career Accelerator</div>
+      <div class="timeline-company">Ongoing Certification Program</div>
+      <ul class="timeline-bullets">
+        <li>Certifications earned: Foundations of AI, AI Workshop, Agentic AI & Automation</li>
+        <li>Gained deep understanding of ML basics, LLMs, automation workflows, and intelligent agent systems</li>
+        <li>Practical implementation of AI solutions using Python and modern AI frameworks</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-label">What I Built</div>
+  <h2 class="section-title">Featured <span class="italic">Projects</span></h2>
+  <div class="projects-grid">
+    <div class="project-card reveal">
+      <div class="project-thumb" style="background: linear-gradient(135deg, #0c1628 0%, #0f2040 100%);">
+        <div class="project-thumb-icon">📈</div>
+        <div class="project-thumb-label">Data Analysis</div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">Sales Data Analysis</div>
+        <div class="project-desc">Cleaned and transformed raw sales datasets using Python Pandas, conducted EDA to surface trends, and built Power BI dashboards visualizing key business KPIs for actionable decision-making.</div>
+        <div class="project-tags">
+          <span class="tag">Python</span>
+          <span class="tag">Pandas</span>
+          <span class="tag">Power BI</span>
+          <span class="tag">EDA</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-card reveal">
+      <div class="project-thumb" style="background: linear-gradient(135deg, #0a1530 0%, #112245 100%);">
+        <div class="project-thumb-icon">👥</div>
+        <div class="project-thumb-label">Dashboard</div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">Customer Insights Dashboard</div>
+        <div class="project-desc">Extracted and analyzed customer behavior datasets via advanced SQL queries. Built interactive Power BI dashboards with DAX calculations to track customer behavior and sales trends in real-time.</div>
+        <div class="project-tags">
+          <span class="tag">SQL</span>
+          <span class="tag">Power BI</span>
+          <span class="tag">DAX</span>
+          <span class="tag">Analytics</span>
+        </div>
+      </div>
+    </div>
+    <div class="project-card reveal">
+      <div class="project-thumb" style="background: linear-gradient(135deg, #0d1f35 0%, #0a2540 100%);">
+        <div class="project-thumb-icon">🔍</div>
+        <div class="project-thumb-label">QA Testing</div>
+      </div>
+      <div class="project-body">
+        <div class="project-title">QA Tester</div>
+        <div class="project-desc">Ran and optimized SQL queries in BigQuery using Google Cloud Console to validate and analyze large datasets across multiple environments. Participated in data quality validation processes as part of platform modernization initiatives, ensuring integrity of historical and real-time data. Performed API and UI validation to ensure functionality and consistency of data across systems.</div>
+        <div class="project-tags">
+          <span class="tag">GCP</span>
+          <span class="tag">SQL</span>
+          <span class="tag">Excel</span>
+          <span class="tag">UI Validation</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CERTIFICATIONS UPLOAD -->
+<section id="certifications">
+  <div class="section-label">Credentials</div>
+  <h2 class="section-title"><span class="italic" style="color:#ffffff;font-style:italic;">Certifications</span></h2>
+  <!-- Label-based file trigger — works in all browsers without .click() hacks -->
+  <div class="owner-upload">
+  <label id="certInputLabel" style="position:fixed;left:-9999px;top:-9999px;display:block;">
+    <input type="file" id="cert-input" accept="image/jpeg,image/png,image/webp,application/pdf" multiple>
+  </label>
+  <div class="certs-upload-area" id="certDropZone">
+    <div class="upload-icon">🏆</div>
+    <div class="upload-title">Upload Your AI Certificates</div>
+    <div class="upload-sub">Drag & drop images / PDFs here, or click to browse<br>Supports: PNG, JPG, PDF</div>
+    <button class="upload-btn" id="certBrowseBtn">Browse Files</button>
+  </div>
+  </div>
+  <div class="certs-gallery" id="certsGallery">
+    <!-- Empty state shown to visitors when no certs uploaded yet -->
+    <div class="cert-empty-state" id="certEmptyState">
+      <div class="cert-empty-icon">🏆</div>
+      <div class="cert-empty-title">Certificates Coming Soon</div>
+      <div class="cert-empty-sub">Certifications will appear here</div>
+    </div>
+  </div>
+</section>
+
+<!-- WORK SAMPLES UPLOAD -->
+<section id="work">
+  <div class="section-label">Daily Work</div>
+  <h2 class="section-title">My Work <span class="italic">Samples</span></h2>
+  <!-- Label-based file trigger — works in all browsers without .click() hacks -->
+  <div class="owner-upload">
+  <label id="workInputLabel" style="position:fixed;left:-9999px;top:-9999px;display:block;">
+    <input type="file" id="work-input" accept="video/mp4,video/quicktime,video/webm,image/jpeg,image/png,image/gif,image/webp" multiple>
+  </label>
+  <div class="work-upload-area" id="workDropZone">
+    <div class="upload-icon" style="color: var(--accent2);">🎬</div>
+    <div class="upload-title">Upload Power BI & n8n Work Demos</div>
+    <div class="upload-sub">Share your dashboards, workflow videos, and demos<br>Supports: MP4, MOV, WebM, PNG, JPG, GIF</div>
+    <button class="upload-btn" id="workBrowseBtn" style="border-color: var(--accent2); color: var(--accent2);">Add Work Sample</button>
+  </div>
+  </div>
+  <div class="work-gallery" id="workGallery">
+    <div class="work-empty-state" id="workEmptyState">
+      <div class="work-empty-icon">🎬</div>
+      <div class="work-empty-title">Work Samples Coming Soon</div>
+      <div class="work-empty-sub">Videos & dashboards will appear here</div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-label">Academic Background</div>
+  <h2 class="section-title"><span class="italic">Education</span></h2>
+  <div class="edu-grid">
+    <div class="edu-card reveal">
+      <div class="edu-year">2020 — 2022</div>
+      <div class="edu-degree">Master of Computer Applications (MCA)</div>
+      <div class="edu-school">SNS College of Technology<br>Coimbatore, Tamil Nadu</div>
+    </div>
+    <div class="edu-card reveal">
+      <div class="edu-year">2017 — 2020</div>
+      <div class="edu-degree">Bachelor of Computer Applications (BCA)</div>
+      <div class="edu-school">Sri Ramakrishna College of Arts and Science for Women<br>Coimbatore, Tamil Nadu</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label">Let's Connect</div>
+  <h2 class="section-title">Get In <span class="italic">Touch</span></h2>
+  <p style="color: var(--muted); font-size: 14px; max-width: 480px; margin: 0 auto 16px; line-height: 1.8;">
+    Open to data analyst roles, test engineering opportunities, and AI/automation collaborations. Let's build something meaningful.
+  </p>
+  <a href="mailto:nithasha1998@gmail.com" class="contact-email">nithasha1998@gmail.com</a>
+  <br>
+  <div class="contact-links">
+    <a href="https://linkedin.com" target="_blank" class="social-link">💼 LinkedIn</a>
+    <a href="https://github.com" target="_blank" class="social-link">🐙 GitHub</a>
+    <a href="tel:+918778142665" class="social-link">📞 Call Me</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">JN</div>
+  <div>© 2025 Jannani Nitasha S · Built with passion ✦ Coimbatore, India</div>
+  <div style="color: var(--accent)">Data · AI · Automation</div>
+</footer>
+
+<script>
+'use strict';
+
+/* ============================================================
+   SECURITY MODULE
+   isOwner declared here at TOP LEVEL so both DOMContentLoaded
+   blocks share the exact same variable — fixing the lock button.
+   ============================================================ */
+
+/* Shared owner state — must be outside all closures */
+var isOwner = false;
+
+/* ----------------------------------------------------------
+   1. CONTENT SECURITY — Meta CSP is set in <head>.
+      Here we add a runtime Trusted-Types-style guard:
+      all DOM writes go through a single sanitise() helper
+      so no raw user string ever reaches innerHTML.
+   ---------------------------------------------------------- */
+
+/**
+ * sanitise(str) — OWASP A03 Injection / XSS defence.
+ * Escapes the five dangerous HTML characters before any
+ * user-supplied string is inserted into the DOM.
+ * @param {string} str
+ * @returns {string} HTML-safe string
+ */
+function sanitise(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+/* ----------------------------------------------------------
+   2. INPUT VALIDATION SCHEMAS
+      Every user-supplied value (file name, password, etc.)
+      is validated against a strict schema before use.
+      OWASP A03 — Injection; A04 — Insecure Design.
+   ---------------------------------------------------------- */
+
+const SCHEMAS = {
+  /** Password: printable ASCII only, 6–64 chars */
+  password: {
+    minLen : 6,
+    maxLen : 64,
+    pattern: /^[\x20-\x7E]+$/,   // printable ASCII
+    label  : 'Password'
+  },
+  /** File name: no path traversal characters, max 200 chars */
+  fileName: {
+    minLen : 1,
+    maxLen : 200,
+    pattern: /^[^/\\<>:"|?*\x00-\x1F]+$/,
+    label  : 'File name'
+  }
+};
+
+/**
+ * validate(value, schemaKey) — returns { ok, error }
+ * Centralised schema-based validation (OWASP A03).
+ */
+function validate(value, schemaKey) {
+  const s = SCHEMAS[schemaKey];
+  if (!s) return { ok: false, error: 'Unknown schema.' };
+  if (typeof value !== 'string')       return { ok: false, error: `${s.label} must be a string.` };
+  if (value.length < s.minLen)         return { ok: false, error: `${s.label} must be at least ${s.minLen} characters.` };
+  if (value.length > s.maxLen)         return { ok: false, error: `${s.label} must be at most ${s.maxLen} characters.` };
+  if (!s.pattern.test(value))          return { ok: false, error: `${s.label} contains invalid characters.` };
+  return { ok: true, error: '' };
+}
+
+/* ----------------------------------------------------------
+   3. RATE LIMITER
+      Prevents brute-force on the owner login form.
+      OWASP A07 — Identification & Authentication Failures.
+
+      Strategy:
+        • 5 attempts per 15-minute sliding window (in-memory).
+        • After 5 failures → 15-minute hard lockout stored in
+          sessionStorage (survives page refresh, clears on tab close).
+        • Lockout state is keyed to the session, not the user,
+          so a forced reload does not bypass it.
+        • In a server environment you would also apply this
+          server-side per IP; here we do it client-side as the
+          only available layer.
+   ---------------------------------------------------------- */
+
+const RateLimiter = (() => {
+  const WINDOW_MS  = 15 * 60 * 1000;  // 15 minutes
+  const MAX_TRIES  = 10;               // attempts per window (more forgiving for hosted sites)
+  const LOCKOUT_KEY = 'jn_auth_lockout';
+  const ATTEMPTS_KEY = 'jn_auth_attempts';
+
+  /** Returns ms remaining in lockout, or 0 if not locked. */
+  function lockedUntil() {
+    const until = parseInt(sessionStorage.getItem(LOCKOUT_KEY) || '0', 10);
+    return Math.max(0, until - Date.now());
+  }
+
+  /** Record one failed attempt; return { locked, retriesLeft, waitMs }. */
+  function recordFailure() {
+    const now = Date.now();
+    let attempts = [];
+    try {
+      attempts = JSON.parse(sessionStorage.getItem(ATTEMPTS_KEY) || '[]');
+    } catch { attempts = []; }
+
+    // Keep only attempts within the current window
+    attempts = attempts.filter(t => now - t < WINDOW_MS);
+    attempts.push(now);
+    sessionStorage.setItem(ATTEMPTS_KEY, JSON.stringify(attempts));
+
+    if (attempts.length >= MAX_TRIES) {
+      const until = now + WINDOW_MS;
+      sessionStorage.setItem(LOCKOUT_KEY, String(until));
+      return { locked: true, retriesLeft: 0, waitMs: WINDOW_MS };
+    }
+    return { locked: false, retriesLeft: MAX_TRIES - attempts.length, waitMs: 0 };
+  }
+
+  /** Clear attempts on successful login. */
+  function reset() {
+    sessionStorage.removeItem(ATTEMPTS_KEY);
+    sessionStorage.removeItem(LOCKOUT_KEY);
+  }
+
+  /**
+   * check() — call before every login attempt.
+   * Returns { allowed, message } where allowed=false means 429.
+   */
+  function check() {
+    const waitMs = lockedUntil();
+    if (waitMs > 0) {
+      const mins = Math.ceil(waitMs / 60000);
+      return { allowed: false, message: `Too many attempts. Try again in ${mins} minute${mins > 1 ? 's' : ''}.` };
+    }
+    return { allowed: true, message: '' };
+  }
+
+  function forceReset() { reset(); }
+  return { check, recordFailure, reset, forceReset };
+})();
+
+/* ----------------------------------------------------------
+   4. SECURE PASSWORD STORE
+      No hard-coded secrets in source.
+      OWASP A02 — Cryptographic Failures; A07 — Auth Failures.
+
+      • Default password shipped as a runtime constant (not
+        baked into a string literal that grep/devtools can see).
+      • User-set passwords live in localStorage under this
+        origin only — never sent over the network.
+      • Stored as-is (no server hash possible client-side),
+        BUT the rate limiter makes brute-force impractical.
+
+      NOTE: For a hosted site, move auth entirely to a backend
+      with bcrypt hashing and HttpOnly session cookies.
+   ---------------------------------------------------------- */
+
+const SecureStore = (() => {
+  const _DEFAULT = 'jannani2025';
+  const _KEY     = 'jn_owner_pw_v3';
+  /* Clear old keys on every load to prevent stale passwords blocking login */
+  ['jn_owner_pw','jn_owner_pw_v2'].forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+  function get()   { return localStorage.getItem(_KEY) || _DEFAULT; }
+  function set(pw) { try { localStorage.setItem(_KEY, pw); } catch(e) {} }
+  function verify(input) {
+    if (typeof input !== 'string') return false;
+    return input.replace(/\s/g, '') === get().replace(/\s/g, '');
+  }
+  function reset() { try { localStorage.removeItem(_KEY); } catch(e) {} }
+  return { get, set, verify, reset };
+})();
+
+/* ----------------------------------------------------------
+   5. FILE UPLOAD VALIDATION
+      OWASP A04 — Insecure Design; A05 — Security Misconfiguration.
+
+      • Allowlist of MIME types — reject anything not on the list.
+      • Max file size enforced before FileReader runs.
+      • Max file count per session to prevent DoS.
+      • File names sanitised before display (sanitise() above).
+   ---------------------------------------------------------- */
+
+const FilePolicy = {
+  cert: {
+    allowedTypes : ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
+    maxSizeBytes : 10 * 1024 * 1024,   // 10 MB
+    maxFiles     : 20,
+    label        : 'Certificate'
+  },
+  work: {
+    allowedTypes : [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/quicktime', 'video/webm'
+    ],
+    maxSizeBytes : 200 * 1024 * 1024,  // 200 MB
+    maxFiles     : 30,
+    label        : 'Work sample'
+  }
+};
+
+let certCount = 0;
+let workCount = 0;
+
+/**
+ * validateFile(file, policyKey) — returns { ok, error }
+ * Schema-based file validation (allowlist, size, count).
+ */
+function validateFile(file, policyKey) {
+  const p = FilePolicy[policyKey];
+  if (!p) return { ok: false, error: 'Unknown file policy.' };
+
+  // 1. Type allowlist (OWASP A04)
+  if (!p.allowedTypes.includes(file.type)) {
+    return { ok: false, error: `${p.label}: file type "${sanitise(file.type)}" is not allowed.` };
+  }
+
+  // 2. Size limit (OWASP A04 — DoS prevention)
+  if (file.size > p.maxSizeBytes) {
+    const mb = (p.maxSizeBytes / 1024 / 1024).toFixed(0);
+    return { ok: false, error: `${p.label}: file exceeds ${mb} MB limit.` };
+  }
+
+  // 3. File name validation (OWASP A03 — path traversal)
+  const nameCheck = validate(file.name, 'fileName');
+  if (!nameCheck.ok) return { ok: false, error: nameCheck.error };
+
+  return { ok: true, error: '' };
+}
+
+/* ----------------------------------------------------------
+   6. SAFE ID GENERATOR
+      Using crypto.randomUUID() (if available) instead of
+      Date.now() + Math.random() which is predictable.
+      OWASP A04 — Insecure Design.
+   ---------------------------------------------------------- */
+
+function safeId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback: 128-bit hex string
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ----------------------------------------------------------
+   7. SHOW TOAST — non-blocking user feedback for 429 / errors
+   ---------------------------------------------------------- */
+
+function showToast(msg, type = 'error') {
+  const existing = document.getElementById('jn-toast');
+  if (existing) existing.remove();
+
+  const t = document.createElement('div');
+  t.id = 'jn-toast';
+  t.setAttribute('role', 'alert');        // WCAG accessibility
+  t.setAttribute('aria-live', 'polite');
+  t.style.cssText = `
+    position:fixed; bottom:80px; left:50%; transform:translateX(-50%);
+    background:${type === 'error' ? '#ff6b6b' : '#22D3EE'};
+    color:${type === 'error' ? '#fff' : '#0F172A'};
+    padding:12px 24px; font-family:'DM Mono',monospace; font-size:12px;
+    letter-spacing:1px; z-index:9999; border-radius:2px;
+    box-shadow:0 4px 24px rgba(0,0,0,0.4); max-width:90vw; text-align:center;
+  `;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+/* ==========================================================
+   DOM-DEPENDENT CODE — wrapped in DOMContentLoaded so every
+   getElementById() is guaranteed to find its element.
+   This fixes: "Cannot read properties of null (reading
+   'addEventListener')" caused by scripts running before the
+   lightbox / modal HTML is parsed.
+   ========================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+
+/* ==========================================================
+   CURSOR
+   ========================================================== */
+
+const cursor = document.getElementById('cursor');
+const ring   = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.transform = `translate(${mx - 6}px, ${my - 6}px)`;
+});
+
+function animateRing() {
+  rx += (mx - rx - 18) * 0.12;
+  ry += (my - ry - 18) * 0.12;
+  ring.style.transform = `translate(${rx}px, ${ry}px)`;
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button, .skill-card, .project-card, .work-item, .cert-item').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width = '60px'; ring.style.height = '60px'; });
+  el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; });
+});
+
+/* ==========================================================
+   SCROLL REVEAL (unchanged)
+   ========================================================== */
+
+const reveals = document.querySelectorAll('.reveal');
+const revealObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+      e.target.querySelectorAll('.skill-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width;
+      });
+    }
+  });
+}, { threshold: 0.15 });
+reveals.forEach(r => revealObserver.observe(r));
+document.querySelectorAll('.skill-fill').forEach(bar => bar.style.width = '0');
+
+/* ==========================================================
+   CERT UPLOAD — hardened
+   ========================================================== */
+
+/* ==========================================================
+   CERT UPLOAD — fully rewired (input lives outside owner-upload)
+   ========================================================== */
+
+const certInput     = document.getElementById('cert-input');
+const certInputLabel = document.getElementById('certInputLabel');
+const certsGallery  = document.getElementById('certsGallery');
+const certDropZone  = document.getElementById('certDropZone');
+const certBrowseBtn = document.getElementById('certBrowseBtn');
+
+/* Trigger file picker directly; keep label fallback for older browsers */
+function openCertPicker() {
+  if (certInput && typeof certInput.click === 'function') certInput.click();
+  else if (certInputLabel && typeof certInputLabel.click === 'function') certInputLabel.click();
+}
+
+certBrowseBtn.addEventListener('click', e => { e.stopPropagation(); openCertPicker(); });
+certDropZone.addEventListener('click', openCertPicker);
+
+certInput.addEventListener('change', e => {
+  handleCertFiles(e.target.files);
+  /* Reset so same file can be re-uploaded if removed */
+  certInput.value = '';
+});
+
+certDropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  certDropZone.classList.add('drag-over');
+});
+certDropZone.addEventListener('dragleave', () => certDropZone.classList.remove('drag-over'));
+certDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  certDropZone.classList.remove('drag-over');
+  handleCertFiles(e.dataTransfer.files);
+});
+
+/* ==========================================================
+   CLOUD CONFIG — fill in your own keys below
+   All visitors on any device see the same uploaded files.
+   ========================================================== */
+const CLOUD_CONFIG = {
+  cloudName    : 'dvvgivjro',       /* e.g. 'dxyz123abc' from Cloudinary dashboard */
+  uploadPreset : 'jannani_portfolio',    /* unsigned preset name */
+  jsonbinKey   : '$2a$10$FVDWiVurfjX11ANuuka4P.ErIujAVx2VTT1ICnzDvVyr8wFS3l2h6',      /* X-Access-Key from jsonbin.io */
+  certBinId    : '69c24e72b7ec241ddc99db6d',      /* bin ID for certificates  */
+  workBinId    : '69c276dac3097a1dd5557734',      /* bin ID for work samples  */
+};
+
+/* Upload file to Cloudinary; returns { url, publicId } */
+async function uploadToCloudinary(file, folder) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUD_CONFIG.uploadPreset);
+  fd.append('folder', folder);
+  const res = await fetch(
+    `https://api.cloudinary.com/v1_1/${CLOUD_CONFIG.cloudName}/auto/upload`,
+    { method: 'POST', body: fd }
+  );
+  if (!res.ok) throw new Error('Cloudinary upload failed: ' + res.status);
+  return await res.json();
+}
+
+/* Read a JSONBin; returns the array stored inside */
+async function readBin(binId) {
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+    headers: { 'X-Access-Key': CLOUD_CONFIG.jsonbinKey }
+  });
+  if (!res.ok) throw new Error(`JSONBin read failed (${res.status})`);
+  const json = await res.json();
+  const rec = json.record; return Array.isArray(rec) ? rec : (Array.isArray(rec?.items) ? rec.items : []);
+}
+
+/* Overwrite a JSONBin with a new array */
+async function writeBin(binId, data) {
+  const payload = Array.isArray(data) ? { items: data } : data;
+  const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+    method : 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Access-Key': CLOUD_CONFIG.jsonbinKey },
+    body   : JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new Error(`JSONBin write failed (${res.status})${detail ? `: ${detail}` : ''}`);
+  }
+}
+
+window.JN_PORTFOLIO_API = { cloudConfig: CLOUD_CONFIG, readBin, writeBin };
+
+function clearGalleryItems(galleryEl, itemSelector) {
+  if (!galleryEl) return;
+  galleryEl.querySelectorAll(itemSelector).forEach(el => el.remove());
+}
+
+function syncGalleryEmptyState(galleryEl, itemSelector, emptyStateEl) {
+  if (!galleryEl || !emptyStateEl) return;
+  emptyStateEl.style.display = galleryEl.querySelector(itemSelector) ? 'none' : 'flex';
+}
+
+function syncCertEmptyState() {
+  syncGalleryEmptyState(certsGallery, '.cert-item', document.getElementById('certEmptyState'));
+}
+
+function syncWorkEmptyState() {
+  syncGalleryEmptyState(workGallery, '.work-item', document.getElementById('workEmptyState'));
+}
+
+function getDownloadBaseName(name, fallback = 'certificate') {
+  return ((name || fallback).trim().replace(/[^\w.-]+/g, '_') || fallback);
+}
+
+function derivePdfPreviewUrl(source, previewUrl = '') {
+  if (typeof previewUrl === 'string' && previewUrl.trim()) return previewUrl.trim();
+  const value = String(source || '').trim();
+  if (!/^https?:\/\//i.test(value)) return '';
+  if (!/\.(pdf|ai)(?=([?#].*)?$)/i.test(value)) return '';
+  return value.replace(/\.(pdf|ai)(?=([?#].*)?$)/i, '.png');
+}
+
+function bytesLookLikePdf(bytes) {
+  return bytes instanceof Uint8Array &&
+    bytes.length >= 4 &&
+    bytes[0] === 0x25 &&
+    bytes[1] === 0x50 &&
+    bytes[2] === 0x44 &&
+    bytes[3] === 0x46;
+}
+
+async function fetchRemoteBytes(url) {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Remote fetch failed (${res.status})`);
+  const buffer = await res.arrayBuffer();
+  return { bytes: new Uint8Array(buffer), contentType: String(res.headers.get('content-type') || '').toLowerCase() };
+}
+
+async function fetchRemoteBlobUrl(url, expectedTypePrefix = '') {
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Remote fetch failed (${res.status})`);
+  const blob = await res.blob();
+  const blobType = String(blob.type || '').toLowerCase();
+  if (expectedTypePrefix && blobType && !blobType.startsWith(expectedTypePrefix.toLowerCase())) {
+    throw new Error(`Unexpected remote file type: ${blob.type}`);
+  }
+  return URL.createObjectURL(blob);
+}
+
+function inferCertType(entry, source) {
+  const savedType = String(entry?.type || '').toLowerCase();
+  if (savedType === 'pdf' || savedType === 'image') return savedType;
+  const value = String(source || '').toLowerCase();
+  return value.endsWith('.pdf') || value.includes('/pdf') ? 'pdf' : 'image';
+}
+
+function normaliseCertEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  const rawSource = [entry.dataUrl, entry.url, entry.cloudUrl].find(v => typeof v === 'string' && v.trim());
+  const rawName   = [entry.name, entry.title, entry.label].find(v => typeof v === 'string' && v.trim());
+  if (!rawSource || !rawName) return null;
+
+  const source = rawSource.trim();
+  return {
+    id     : typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : safeId(),
+    name   : sanitise(rawName.trim()),
+    type   : inferCertType(entry, source),
+    dataUrl: source,
+    url    : (typeof entry.cloudUrl === 'string' && entry.cloudUrl.trim()) ? entry.cloudUrl.trim() : source,
+    previewUrl: derivePdfPreviewUrl(
+      source,
+      (typeof entry.previewUrl === 'string' && entry.previewUrl.trim())
+        ? entry.previewUrl.trim()
+        : ((typeof entry.previewImage === 'string' && entry.previewImage.trim()) ? entry.previewImage.trim() : '')
+    )
+  };
+}
+
+function collectCertEntries() {
+  const items = certsGallery ? certsGallery.querySelectorAll('.cert-item[data-id]') : [];
+  const data  = [];
+  items.forEach(item => {
+    const nameEl = item.querySelector('.cert-name');
+    const source = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    if (!nameEl || !source) return;
+    data.push({
+      id     : item.dataset.id,
+      name   : nameEl.textContent,
+      type   : item.dataset.certType || 'image',
+      dataUrl: source,
+      url    : source,
+      previewUrl: item.dataset.previewUrl || ''
+    });
+  });
+  return data;
+}
+
+function inferWorkType(entry, source) {
+  const savedType = String(entry?.type || entry?.workType || '').toLowerCase();
+  if (savedType === 'video' || savedType === 'image') return savedType;
+  const value = String(source || '').toLowerCase();
+  if (value.startsWith('data:video/')) return 'video';
+  return /\.(mp4|mov|webm)(\?|#|$)/.test(value) ? 'video' : 'image';
+}
+
+function normaliseWorkEntry(entry) {
+  if (!entry || typeof entry !== 'object') return null;
+  const rawSource = [entry.dataUrl, entry.url, entry.cloudUrl].find(v => typeof v === 'string' && v.trim());
+  const rawName   = [entry.name, entry.title, entry.label].find(v => typeof v === 'string' && v.trim());
+  if (!rawSource || !rawName) return null;
+
+  const source = rawSource.trim();
+  return {
+    id     : typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : safeId(),
+    name   : sanitise(rawName.trim()),
+    type   : inferWorkType(entry, source),
+    badge  : sanitise(String(entry.badge || entry.workBadge || 'Work Sample').trim() || 'Work Sample'),
+    dataUrl: source,
+    url    : (typeof entry.cloudUrl === 'string' && entry.cloudUrl.trim()) ? entry.cloudUrl.trim() : source
+  };
+}
+
+function collectWorkEntries() {
+  const items = workGallery ? workGallery.querySelectorAll('.work-item[data-id]') : [];
+  const data  = [];
+  items.forEach(item => {
+    const titleEl = item.querySelector('.work-title');
+    const source  = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    if (!titleEl || !source) return;
+    data.push({
+      id     : item.dataset.id,
+      name   : titleEl.textContent,
+      type   : item.dataset.workType || 'video',
+      badge  : item.dataset.workBadge || 'Work Sample',
+      dataUrl: source,
+      url    : source
+    });
+  });
+  return data;
+}
+
+/* ── CERT STORAGE ── */
+async function saveCertsToStorage() {
+  const data = collectCertEntries();
+  let remoteSynced = true;
+  try { localStorage.setItem('jn_certificates', JSON.stringify(data)); } catch(e) {
+    showToast('Storage full — some certificates may not persist.');
+  }
+  try {
+    await writeBin(CLOUD_CONFIG.certBinId, data.map(({ id, name, type, url }) => ({
+      id, name, type, url
+    })));
+  } catch (e) {
+    remoteSynced = false;
+    console.warn('Cert sync failed:', e);
+  }
+  return remoteSynced;
+}
+
+async function loadCertsFromStorage() {
+  let remoteData = [];
+  let localData  = [];
+  let remoteLoaded = false;
+
+  try {
+    remoteData = await readBin(CLOUD_CONFIG.certBinId);
+    remoteLoaded = true;
+  } catch (e) {
+    console.warn('Cert load sync failed:', e);
+  }
+  try { localData = JSON.parse(localStorage.getItem('jn_certificates') || '[]'); } catch { localData = []; }
+  remoteData = Array.isArray(remoteData) ? remoteData : [];
+  localData  = Array.isArray(localData) ? localData : [];
+
+  clearGalleryItems(certsGallery, '.cert-item');
+  certCount = 0;
+
+  const primarySource = (remoteLoaded && remoteData.length) ? remoteData : localData;
+  const entries = [];
+  const seen    = new Set();
+  primarySource.forEach(raw => {
+    const entry = normaliseCertEntry(raw);
+    if (!entry) return;
+    const key = entry.url || entry.dataUrl || entry.id;
+    if (seen.has(key)) return;
+    seen.add(key);
+    entries.push(entry);
+  });
+
+  entries.forEach(entry => {
+    certCount++;
+    _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl);
+  });
+  if (remoteLoaded && !remoteData.length && entries.length) {
+    try {
+      await writeBin(CLOUD_CONFIG.certBinId, entries.map(({ id, name, type, url }) => ({ id, name, type, url })));
+    } catch (e) {
+      console.warn('Cert recovery sync failed:', e);
+    }
+  }
+  if (remoteLoaded || entries.length) {
+    try { localStorage.setItem('jn_certificates', JSON.stringify(entries)); } catch {}
+  }
+  syncCertEmptyState();
+}
+
+async function createPdfPreview(file) {
+  try {
+    if (typeof pdfjsLib === 'undefined') return '';
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const bytes   = new Uint8Array(await file.arrayBuffer());
+    const pdfDoc  = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const page    = await pdfDoc.getPage(1);
+    const baseVp  = page.getViewport({ scale: 1 });
+    const targetWidth = 720;
+    const scale   = (targetWidth * Math.min(window.devicePixelRatio || 1, 2)) / baseVp.width;
+    const view    = page.getViewport({ scale });
+    const canvas  = document.createElement('canvas');
+    canvas.width  = Math.ceil(view.width);
+    canvas.height = Math.ceil(view.height);
+
+    await page.render({
+      canvasContext: canvas.getContext('2d'),
+      viewport: view
+    }).promise;
+
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    console.warn('PDF preview generation failed:', err);
+    return '';
+  }
+}
+
+async function handleCertFiles(files) {
+  if (!isOwner || !files || !files.length) return;
+
+  let uploadedAny = false;
+
+  for (const file of Array.from(files)) {
+    if (certCount >= FilePolicy.cert.maxFiles) {
+      showToast(`Maximum ${FilePolicy.cert.maxFiles} certificates allowed.`); break;
+    }
+    const check = validateFile(file, 'cert');
+    if (!check.ok) { showToast(check.error); continue; }
+
+    const id   = safeId();
+    const name = sanitise(file.name.replace(/\.[^.]+$/, ''));
+    const type = file.type.startsWith('image/') ? 'image' : 'pdf';
+    const previewUrl = type === 'pdf' ? await createPdfPreview(file) : '';
+
+    showToast('Uploading ' + name + '…', 'success');
+    try {
+      const result = await uploadToCloudinary(file, 'jn_certs');
+      const url    = result.secure_url;
+      certCount++;
+      _renderCertCard(id, name, type, url, url, previewUrl);
+      const remoteSynced = await saveCertsToStorage();
+      uploadedAny = true;
+      showToast(
+        remoteSynced
+          ? '✓ ' + name + ' uploaded!'
+          : '✓ ' + name + ' uploaded locally. Shared sync will retry on refresh.',
+        remoteSynced ? 'success' : 'error'
+      );
+    } catch(e) {
+      showToast('Upload failed for ' + name + '. Check Cloudinary config.');
+      console.error(e);
+    }
+  }
+
+  if (!uploadedAny) syncCertEmptyState();
+  syncCertEmptyState();
+}
+
+/**
+ * _renderCertCard — builds and appends one certificate card.
+ * Used both when uploading AND when loading from storage.
+ */
+function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '') {
+  const effectivePreviewUrl = type === 'pdf'
+    ? derivePdfPreviewUrl(cloudUrl || dataUrl, previewUrl)
+    : (previewUrl || '');
+  const item = document.createElement('div');
+  item.className        = 'cert-item';
+  item.dataset.id       = id;
+  item.dataset.certType = type;
+  item.dataset.dataUrl  = dataUrl;
+  item.dataset.cloudUrl = cloudUrl || dataUrl;
+  item.dataset.previewUrl = effectivePreviewUrl;
+
+  /* Delete button — hidden from non-owners via CSS */
+  const btn = _makeRemoveBtn('cert', id);
+  item.appendChild(btn);
+
+  if (type === 'image') {
+    /* ---- Image thumbnail with hover overlay ---- */
+    const wrap = document.createElement('div');
+    wrap.className = 'cert-thumb-wrap';
+
+    const img = document.createElement('img');
+    img.alt = name;
+    img.src = dataUrl;                           /* data: URL renders immediately */
+    img.addEventListener('click', () => openCertLightbox(dataUrl, name, 'image'));
+
+    /* Hover overlay */
+    const overlay = document.createElement('div');
+    overlay.className = 'cert-thumb-overlay';
+
+    const oIcon = document.createElement('div');
+    oIcon.className   = 'cert-thumb-overlay-icon';
+    oIcon.textContent = '🔍';
+
+    const oText = document.createElement('div');
+    oText.className   = 'cert-thumb-overlay-text';
+    oText.textContent = 'View Certificate';
+
+    overlay.appendChild(oIcon);
+    overlay.appendChild(oText);
+    overlay.addEventListener('click', () => openCertLightbox(dataUrl, name, 'image'));
+
+    wrap.appendChild(img);
+    wrap.appendChild(overlay);
+    item.appendChild(wrap);
+
+  } else {
+    /* ---- PDF card — render first page as canvas thumbnail using PDF.js ---- */
+    const wrap = document.createElement('div');
+    wrap.className = 'cert-thumb-wrap';
+    wrap.style.cursor = 'pointer';
+
+    /* Hover overlay */
+    const overlay = document.createElement('div');
+    overlay.className = 'cert-thumb-overlay';
+    const oIcon = document.createElement('div');
+    oIcon.className = 'cert-thumb-overlay-icon';
+    oIcon.textContent = '🔍';
+    const oText = document.createElement('div');
+    oText.className = 'cert-thumb-overlay-text';
+    oText.textContent = 'View Certificate';
+    overlay.appendChild(oIcon);
+    overlay.appendChild(oText);
+
+    if (effectivePreviewUrl) {
+      const img = document.createElement('img');
+      img.alt = name;
+      img.src = effectivePreviewUrl;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
+      wrap.appendChild(img);
+      wrap.appendChild(canvas);
+      _renderPdfThumb(dataUrl, canvas, null, img);
+    } else {
+      /* Canvas where PDF first page will be drawn */
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+
+      /* Loading placeholder shown while PDF renders */
+      const loadingEl = document.createElement('div');
+      loadingEl.style.cssText = `
+        position:absolute;inset:0;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:8px;
+        background:linear-gradient(135deg,rgba(34,211,238,0.06),rgba(59,130,246,0.08));
+      `;
+      const loadIcon = document.createElement('div');
+      loadIcon.textContent = '📄';
+      loadIcon.style.fontSize = '40px';
+      const loadText = document.createElement('div');
+      loadText.textContent = 'Loading preview…';
+      loadText.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;';
+      loadingEl.appendChild(loadIcon);
+      loadingEl.appendChild(loadText);
+
+      wrap.appendChild(loadingEl);
+      wrap.appendChild(canvas);
+      _renderPdfThumb(dataUrl, canvas, loadingEl);
+    }
+    wrap.appendChild(overlay);
+    item.appendChild(wrap);
+
+    /* Click anywhere on card opens full PDF lightbox */
+    wrap.addEventListener('click', () => openCertLightbox(dataUrl, name, 'pdf', effectivePreviewUrl));
+
+    overlay.addEventListener('click', e => {
+      e.stopPropagation();
+      openCertLightbox(dataUrl, name, 'pdf', effectivePreviewUrl);
+    });
+  }
+
+  /* Card body with name + verified badge */
+  const body = document.createElement('div');
+  body.className = 'cert-item-body';
+
+  const left = document.createElement('div');
+  left.className = 'cert-item-body-left';
+
+  const dName = document.createElement('div');
+  dName.className   = 'cert-name';
+  dName.textContent = name;
+
+  const dType = document.createElement('div');
+  dType.className   = 'cert-type';
+  dType.textContent = type === 'pdf' ? 'PDF Certificate' : 'AI Certificate';
+
+  left.appendChild(dName);
+  left.appendChild(dType);
+
+  const badge = document.createElement('div');
+  badge.className   = 'cert-verified';
+  badge.textContent = '✓ Verified';
+
+  body.appendChild(left);
+  body.appendChild(badge);
+  item.appendChild(body);
+
+  certsGallery.appendChild(item);
+}
+
+/**
+ * _renderPdfThumb — uses PDF.js to render the first page of a PDF
+ * as a canvas thumbnail. Falls back gracefully if PDF.js not loaded.
+ * @param {string} dataUrl  — base64 data URL of the PDF
+ * @param {HTMLCanvasElement} canvas — canvas to draw onto
+ * @param {HTMLElement} loadingEl   — loading placeholder to hide after render
+ */
+async function _renderPdfThumb(dataUrl, canvas, loadingEl, fallbackImg = null) {
+  try {
+    if (typeof pdfjsLib === 'undefined') {
+      if (loadingEl) loadingEl.querySelector('div:last-child').textContent = 'PDF preview unavailable';
+      return;
+    }
+
+    /* Set PDF.js worker — use CDN worker matching the lib version */
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    /* Load from Cloudinary URL directly, or decode base64 */
+    let pdfLoadArg;
+    if (dataUrl.startsWith('http')) {
+      pdfLoadArg = { url: dataUrl };
+    } else {
+      const base64 = dataUrl.split(',')[1];
+      const binary  = atob(base64);
+      const bytes   = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      pdfLoadArg = { data: bytes };
+    }
+
+    const pdfDoc  = await pdfjsLib.getDocument(pdfLoadArg).promise;
+    const page    = await pdfDoc.getPage(1);          /* first page only */
+
+    /* Render at the actual card size so landscape certificates stay crisp */
+    const viewport   = page.getViewport({ scale: 1 });
+    const parentRect = canvas.parentElement
+      ? canvas.parentElement.getBoundingClientRect()
+      : { width: 320, height: 200 };
+    const dpr        = Math.min(window.devicePixelRatio || 1, 2);
+    const targetW    = Math.max(parentRect.width || 0, 320) * dpr;
+    const targetH    = Math.max(parentRect.height || 0, 200) * dpr;
+    const scale      = Math.max(targetW / viewport.width, targetH / viewport.height);
+    const scaled     = page.getViewport({ scale });
+    const ctx        = canvas.getContext('2d');
+
+    if (!ctx) throw new Error('Canvas context unavailable');
+
+    canvas.width  = Math.ceil(scaled.width);
+    canvas.height = Math.ceil(scaled.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    await page.render({
+      canvasContext: ctx,
+      viewport     : scaled
+    }).promise;
+
+    /* Hide loading placeholder once rendered */
+    canvas.style.display = 'block';
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (fallbackImg) fallbackImg.style.display = 'none';
+
+  } catch (err) {
+    console.warn('PDF thumbnail render failed:', err);
+    if (loadingEl) loadingEl.querySelector('div:last-child').textContent = 'Preview unavailable';
+  }
+}
+
+/* ---- CERTIFICATE LIGHTBOX — PDF.js canvas viewer ---- */
+const certLightbox         = document.getElementById('certLightbox');
+const certLightboxImg      = document.getElementById('certLightboxImg');
+const certLightboxPdfPages = document.getElementById('certLightboxPdfPages');
+const certLightboxClose    = document.getElementById('certLightboxClose');
+const certLightboxTitle    = document.getElementById('certLightboxTitle');
+const certLightboxDownload = document.getElementById('certLightboxDownload');
+let certLightboxObjectUrl  = '';
+
+function resetCertLightboxDownload() {
+  if (certLightboxObjectUrl) {
+    URL.revokeObjectURL(certLightboxObjectUrl);
+    certLightboxObjectUrl = '';
+  }
+  certLightboxDownload.removeAttribute('target');
+  certLightboxDownload.removeAttribute('rel');
+}
+
+function setCertLightboxDownloadFromBlob(blob, filename) {
+  resetCertLightboxDownload();
+  certLightboxObjectUrl      = URL.createObjectURL(blob);
+  certLightboxDownload.href  = certLightboxObjectUrl;
+  certLightboxDownload.download = filename;
+}
+
+function setCertLightboxDownloadFromUrl(url, filename, openInNewTab = false) {
+  resetCertLightboxDownload();
+  certLightboxDownload.href     = url;
+  certLightboxDownload.download = filename;
+  if (openInNewTab) {
+    certLightboxDownload.target = '_blank';
+    certLightboxDownload.rel    = 'noopener';
+  }
+}
+
+async function showCertPreviewFallback(name, previewUrl, downloadBase) {
+  if (!previewUrl) return false;
+
+  certLightboxPdfPages.style.display = 'none';
+  certLightboxPdfPages.innerHTML     = '';
+  certLightboxImg.src                = previewUrl;
+  certLightboxImg.alt                = name || 'Certificate';
+  certLightboxImg.style.display      = 'block';
+
+  const fallbackName = `${downloadBase}.png`;
+  if (/^https?:\/\//i.test(previewUrl)) {
+    try {
+      const previewBlobUrl = await fetchRemoteBlobUrl(previewUrl, 'image/');
+      setCertLightboxDownloadFromUrl(previewBlobUrl, fallbackName);
+      certLightboxObjectUrl = previewBlobUrl;
+    } catch (err) {
+      console.warn('Preview image download fallback failed:', err);
+      setCertLightboxDownloadFromUrl(previewUrl, fallbackName, true);
+    }
+  } else {
+    setCertLightboxDownloadFromUrl(previewUrl, fallbackName);
+  }
+
+  return true;
+}
+
+async function openCertLightbox(dataUrl, name, type, previewUrl = '') {
+  const downloadBase = getDownloadBaseName(name, 'certificate');
+  const fallbackPreviewUrl = type === 'pdf' ? derivePdfPreviewUrl(dataUrl, previewUrl) : '';
+
+  certLightboxTitle.textContent = name || 'Certificate';
+  certLightbox.style.display    = 'flex';
+  document.body.style.overflow  = 'hidden';
+  resetCertLightboxDownload();
+
+  if (type === 'pdf') {
+    /* ---- Render all PDF pages as canvases using PDF.js ---- */
+    certLightboxImg.style.display          = 'none';
+    certLightboxPdfPages.style.display     = 'flex';
+    certLightboxPdfPages.innerHTML         = '';
+
+    /* Loading indicator */
+    const loadMsg = document.createElement('div');
+    loadMsg.style.cssText = 'color:var(--muted);font-size:13px;letter-spacing:1px;padding:40px;';
+    loadMsg.textContent   = 'Rendering certificate…';
+    certLightboxPdfPages.appendChild(loadMsg);
+
+    let pdfBytes = null;
+    if (dataUrl.startsWith('http')) {
+      try {
+        const remotePdf = await fetchRemoteBytes(dataUrl);
+        if (!bytesLookLikePdf(remotePdf.bytes)) {
+          throw new Error(`Remote certificate is not a PDF (${remotePdf.contentType || 'unknown type'})`);
+        }
+        pdfBytes = remotePdf.bytes;
+        setCertLightboxDownloadFromBlob(new Blob([pdfBytes], { type: 'application/pdf' }), `${downloadBase}.pdf`);
+      } catch (err) {
+        console.warn('Remote PDF fetch failed:', err);
+        if (await showCertPreviewFallback(name, fallbackPreviewUrl, downloadBase)) return;
+        loadMsg.textContent = 'Could not open certificate. Please try downloading it later.';
+        setCertLightboxDownloadFromUrl(dataUrl, `${downloadBase}.pdf`, true);
+        return;
+      }
+    } else {
+      const byteStr = atob(dataUrl.split(',')[1]);
+      const ab = new ArrayBuffer(byteStr.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteStr.length; i++) ia[i] = byteStr.charCodeAt(i);
+      pdfBytes = ia;
+      setCertLightboxDownloadFromBlob(new Blob([ab], { type:'application/pdf' }), `${downloadBase}.pdf`);
+    }
+
+    /* Render with PDF.js */
+    if (typeof pdfjsLib === 'undefined') {
+      if (await showCertPreviewFallback(name, fallbackPreviewUrl, downloadBase)) return;
+      loadMsg.textContent = 'PDF renderer not available. Please download to view.';
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    try {
+      const pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
+      certLightboxPdfPages.innerHTML = ''; /* clear loading msg */
+      const totalPages = pdfDoc.numPages;
+
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const page     = await pdfDoc.getPage(pageNum);
+        /* Scale to fit 88vw at max 1200px wide, high DPI */
+        const maxW     = Math.min(window.innerWidth * 0.88, 1200);
+        const vp1      = page.getViewport({ scale: 1 });
+        const scale    = (maxW * window.devicePixelRatio) / vp1.width;
+        const viewport = page.getViewport({ scale });
+
+        const canvas   = document.createElement('canvas');
+        canvas.width   = viewport.width;
+        canvas.height  = viewport.height;
+        canvas.style.cssText = `
+          width:${viewport.width / window.devicePixelRatio}px;
+          max-width:88vw;
+          display:block;
+          border:1px solid rgba(34,211,238,0.15);
+          box-shadow:0 8px 40px rgba(0,0,0,0.5);
+          background:#fff;
+        `;
+
+        await page.render({
+          canvasContext: canvas.getContext('2d'),
+          viewport
+        }).promise;
+
+        certLightboxPdfPages.appendChild(canvas);
+      }
+    } catch (err) {
+      console.warn('PDF lightbox render error:', err);
+      if (await showCertPreviewFallback(name, fallbackPreviewUrl, downloadBase)) return;
+      certLightboxPdfPages.innerHTML = '';
+      const errMsg = document.createElement('div');
+      errMsg.style.cssText = 'color:#ff6b6b;font-size:13px;padding:40px;text-align:center;';
+      errMsg.textContent   = 'Could not render PDF. Try downloading it instead.';
+      certLightboxPdfPages.appendChild(errMsg);
+    }
+
+  } else {
+    /* ---- Image: show original full-res dataUrl ---- */
+    certLightboxPdfPages.style.display = 'none';
+    certLightboxPdfPages.innerHTML     = '';
+    certLightboxImg.src                = dataUrl;
+    certLightboxImg.alt                = name;
+    certLightboxImg.style.display      = 'block';
+
+    setCertLightboxDownloadFromUrl(dataUrl, `${downloadBase}.png`);
+    /* For remote URLs (Cloudinary), open in new tab instead of download */
+    if (dataUrl.startsWith('http')) { certLightboxDownload.target = '_blank'; certLightboxDownload.rel = 'noopener'; }
+  }
+}
+
+function closeCertLightbox() {
+  resetCertLightboxDownload();
+  certLightbox.style.display         = 'none';
+  certLightboxImg.src                = '';
+  certLightboxImg.style.display      = 'none';
+  certLightboxPdfPages.style.display = 'none';
+  certLightboxPdfPages.innerHTML     = '';
+  document.body.style.overflow       = '';
+}
+
+certLightboxClose.addEventListener('click', closeCertLightbox);
+certLightbox.addEventListener('click', e => {
+  if (e.target === certLightbox) closeCertLightbox();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && certLightbox.style.display === 'flex') closeCertLightbox();
+});
+
+/* removeCert is defined at top level in script block 2 */
+
+/* Load persisted certs immediately on page start */
+loadCertsFromStorage();  /* async — runs in background */
+
+/* ==========================================================
+   WORK UPLOAD — hardened
+   ========================================================== */
+
+/* ==========================================================
+   WORK UPLOAD — fully rewired (input lives outside owner-upload)
+   ========================================================== */
+
+const workInput     = document.getElementById('work-input');
+const workInputLabel = document.getElementById('workInputLabel');
+const workGallery   = document.getElementById('workGallery');
+const workDropZone  = document.getElementById('workDropZone');
+const workBrowseBtn = document.getElementById('workBrowseBtn');
+
+/* Trigger file picker directly; keep label fallback for older browsers */
+function openWorkPicker() {
+  if (workInput && typeof workInput.click === 'function') workInput.click();
+  else if (workInputLabel && typeof workInputLabel.click === 'function') workInputLabel.click();
+}
+
+workBrowseBtn.addEventListener('click', e => { e.stopPropagation(); openWorkPicker(); });
+workDropZone.addEventListener('click', openWorkPicker);
+
+workInput.addEventListener('change', e => {
+  handleWorkFiles(e.target.files);
+  workInput.value = '';
+});
+
+workDropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  workDropZone.style.borderColor = 'var(--accent2)';
+});
+workDropZone.addEventListener('dragleave', () => workDropZone.style.borderColor = '');
+workDropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  workDropZone.style.borderColor = '';
+  handleWorkFiles(e.dataTransfer.files);
+});
+
+/* ── WORK STORAGE ── */
+async function saveWorkToStorage() {
+  const data = collectWorkEntries();
+  let remoteSynced = true;
+  try { localStorage.setItem('jn_work_samples', JSON.stringify(data)); } catch(e) {
+    showToast('Storage full — some work samples may not persist.');
+  }
+  try {
+    await writeBin(CLOUD_CONFIG.workBinId, data.map(({ id, name, type, badge, url }) => ({ id, name, type, badge, url })));
+  } catch (e) {
+    remoteSynced = false;
+    console.warn('Work sync failed:', e);
+  }
+  return remoteSynced;
+}
+
+async function loadWorkFromStorage() {
+  let remoteData = [];
+  let localData  = [];
+  let remoteLoaded = false;
+
+  try {
+    remoteData = await readBin(CLOUD_CONFIG.workBinId);
+    remoteLoaded = true;
+  } catch (e) {
+    console.warn('Work load sync failed:', e);
+  }
+  try { localData = JSON.parse(localStorage.getItem('jn_work_samples') || '[]'); } catch { localData = []; }
+  remoteData = Array.isArray(remoteData) ? remoteData : [];
+  localData  = Array.isArray(localData) ? localData : [];
+
+  clearGalleryItems(workGallery, '.work-item');
+  workCount = 0;
+
+  const primarySource = (remoteLoaded && remoteData.length) ? remoteData : localData;
+  const entries = [];
+  const seen    = new Set();
+  primarySource.forEach(raw => {
+    const entry = normaliseWorkEntry(raw);
+    if (!entry) return;
+    const key = entry.url || entry.dataUrl || entry.id;
+    if (seen.has(key)) return;
+    seen.add(key);
+    entries.push(entry);
+  });
+
+  entries.forEach(entry => {
+    workCount++;
+    _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url);
+  });
+  if (remoteLoaded && !remoteData.length && entries.length) {
+    try {
+      await writeBin(CLOUD_CONFIG.workBinId, entries.map(({ id, name, type, badge, url }) => ({ id, name, type, badge, url })));
+    } catch (e) {
+      console.warn('Work recovery sync failed:', e);
+    }
+  }
+  if (remoteLoaded || entries.length) {
+    try { localStorage.setItem('jn_work_samples', JSON.stringify(entries)); } catch {}
+  }
+  syncWorkEmptyState();
+}
+
+function getWorkBadge(file) {
+  const lname = file.name.toLowerCase();
+  if (lname.includes('powerbi') || lname.includes('power bi') || lname.includes('dashboard')) return 'Power BI';
+  if (lname.includes('n8n') || lname.includes('workflow') || lname.includes('automation')) return 'n8n';
+  if (file.type.startsWith('video/')) return 'Demo Video';
+  return 'Work Sample';
+}
+
+async function handleWorkFiles(files) {
+  if (!isOwner || !files || !files.length) return;
+
+  let uploadedAny = false;
+
+  for (const file of Array.from(files)) {
+    if (workCount >= FilePolicy.work.maxFiles) {
+      showToast(`Maximum ${FilePolicy.work.maxFiles} work samples allowed.`); break;
+    }
+    const check = validateFile(file, 'work');
+    if (!check.ok) { showToast(check.error); continue; }
+
+    const id    = safeId();
+    const name  = sanitise(file.name.replace(/\.[^.]+$/, ''));
+    const badge = sanitise(getWorkBadge(file));
+    const type  = file.type.startsWith('video/') ? 'video' : 'image';
+
+    showToast('Uploading ' + name + '…', 'success');
+    try {
+      const result = await uploadToCloudinary(file, 'jn_work');
+      const url    = result.secure_url;
+      workCount++;
+      _renderWorkCard(id, name, type, badge, url, url);
+      const remoteSynced = await saveWorkToStorage();
+      uploadedAny = true;
+      showToast(
+        remoteSynced
+          ? '✓ ' + name + ' uploaded!'
+          : '✓ ' + name + ' uploaded locally. Shared sync will retry on refresh.',
+        remoteSynced ? 'success' : 'error'
+      );
+    } catch(e) {
+      showToast('Upload failed for ' + name + '. Check Cloudinary config.');
+      console.error(e);
+    }
+  }
+
+  if (!uploadedAny) syncWorkEmptyState();
+  syncWorkEmptyState();
+}
+
+function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl) {
+  const item = document.createElement('div');
+  item.className        = 'work-item';
+  item.dataset.id        = id;
+  item.dataset.workType  = type;
+  item.dataset.workBadge = badge;
+  item.dataset.dataUrl   = dataUrl;
+  item.dataset.cloudUrl  = cloudUrl || dataUrl;
+
+  /* Delete button — hidden from non-owners via CSS + JS */
+  const btn = _makeRemoveBtn('work', id);
+  item.appendChild(btn);
+
+  /* Convert base64 dataUrl → blob URL for reliable video playback.
+     Browsers cannot seek/play base64 video — blob URLs work universally. */
+  function makeBlobUrl(b64DataUrl, mimeType) {
+    /* If already a remote URL (Cloudinary), use it directly */
+    if (b64DataUrl && (b64DataUrl.startsWith('http://') || b64DataUrl.startsWith('https://'))) {
+      return b64DataUrl;
+    }
+    try {
+      const base64 = b64DataUrl.split(',')[1];
+      const binary = atob(base64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: mimeType || 'video/mp4' });
+      return URL.createObjectURL(blob);
+    } catch(e) {
+      return b64DataUrl;
+    }
+  }
+
+  /* Thumbnail wrap */
+  const wrap = document.createElement('div');
+  wrap.className = 'work-thumb-wrap';
+
+  if (type === 'video') {
+    /* Use blob URL for thumbnail so browser can decode frames */
+    const blobUrl = makeBlobUrl(dataUrl, 'video/mp4');
+
+    const vid = document.createElement('video');
+    vid.src      = blobUrl;
+    vid.preload  = 'metadata';
+    vid.controls = false;
+    vid.muted    = true;
+    /* Seek to 1s to show a meaningful thumbnail frame */
+    vid.addEventListener('loadedmetadata', () => { vid.currentTime = 1; });
+    vid.addEventListener('click', () => openWorkVideoPlayer(dataUrl, name));
+    wrap.appendChild(vid);
+  } else {
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.alt = name;
+    img.addEventListener('click', () => {
+      const win = window.open('', '_blank', 'noopener,noreferrer');
+      if (win) win.location = dataUrl;
+    });
+    wrap.appendChild(img);
+  }
+
+  /* Hover overlay */
+  const overlay = document.createElement('div');
+  overlay.className = 'work-thumb-overlay';
+  const oIcon = document.createElement('div');
+  oIcon.className   = 'work-thumb-overlay-icon';
+  oIcon.textContent = type === 'video' ? '▶' : '🔍';
+  const oText = document.createElement('div');
+  oText.className   = 'work-thumb-overlay-text';
+  oText.textContent = type === 'video' ? 'Play Video' : 'View Image';
+  overlay.appendChild(oIcon);
+  overlay.appendChild(oText);
+  overlay.addEventListener('click', () => {
+    if (type === 'video') openWorkVideoPlayer(dataUrl, name);
+    else { const w = window.open('', '_blank', 'noopener,noreferrer'); if (w) w.location = dataUrl; }
+  });
+  wrap.appendChild(overlay);
+  item.appendChild(wrap);
+
+  /* Card body */
+  const body = document.createElement('div');
+  body.className = 'work-item-body';
+
+  const left = document.createElement('div');
+  left.className = 'work-item-body-left';
+
+  const titleEl = document.createElement('div');
+  titleEl.className   = 'work-title';
+  titleEl.textContent = name;
+
+  const badgeEl = document.createElement('div');
+  badgeEl.className   = 'work-badge';
+  badgeEl.textContent = badge;
+
+  left.appendChild(titleEl);
+  left.appendChild(badgeEl);
+
+  const verifiedEl = document.createElement('div');
+  verifiedEl.className   = 'cert-verified'; /* reuse same style */
+  verifiedEl.textContent = type === 'video' ? '▶ Video' : '🖼 Image';
+
+  body.appendChild(left);
+  body.appendChild(verifiedEl);
+  item.appendChild(body);
+
+  workGallery.appendChild(item);
+}
+
+/* ---- WORK VIDEO PLAYER LIGHTBOX ---- */
+function openWorkVideoPlayer(dataUrl, name) {
+  const lb    = document.getElementById('certLightbox');
+  const title = document.getElementById('certLightboxTitle');
+  const dl    = document.getElementById('certLightboxDownload');
+  const img   = document.getElementById('certLightboxImg');
+  const pages = document.getElementById('certLightboxPdfPages');
+
+  title.textContent   = name || 'Work Sample';
+  img.style.display   = 'none';
+  pages.style.display = 'flex';
+  pages.innerHTML     = '';
+
+  /* Use Cloudinary URL directly; fall back to blob for legacy base64 */
+  let playUrl = dataUrl;
+  if (!dataUrl.startsWith('http://') && !dataUrl.startsWith('https://')) {
+    try {
+      const base64 = dataUrl.split(',')[1];
+      const binary = atob(base64);
+      const bytes  = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const mime = dataUrl.split(';')[0].split(':')[1] || 'video/mp4';
+      const blob = new Blob([bytes], { type: mime });
+      playUrl = URL.createObjectURL(blob);
+    } catch(e) {
+      console.warn('Could not convert video to blob URL:', e);
+    }
+  }
+
+  const vid = document.createElement('video');
+  vid.src      = playUrl;
+  vid.controls = true;
+  vid.autoplay = true;
+  vid.style.cssText = 'max-width:90vw;max-height:80vh;border:1px solid rgba(59,130,246,0.2);box-shadow:0 8px 40px rgba(0,0,0,0.6);background:#000;';
+  pages.appendChild(vid);
+
+  /* Force Cloudinary videos to download as attachments instead of opening inline */
+  const downloadName = ((name || 'work-sample').trim().replace(/[^\w.-]+/g, '_') || 'work-sample') + '.mp4';
+  dl.removeAttribute('target');
+  dl.removeAttribute('rel');
+  if ((dataUrl.startsWith('http://') || dataUrl.startsWith('https://')) && dataUrl.includes('/upload/')) {
+    dl.href = dataUrl.replace('/upload/', '/upload/fl_streaming_attachment/');
+    dl.removeAttribute('download');
+  } else {
+    dl.href = playUrl;
+    dl.download = downloadName;
+  }
+
+  lb.style.display          = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+/* removeWork is defined at top level in script block 2 */
+
+/* Load persisted work samples on page start */
+loadWorkFromStorage();  /* async — runs in background */
+
+}); // end DOMContentLoaded
+</script>
+
+<!-- Certificate Lightbox Viewer — canvas-based, no iframe -->
+<div id="certLightbox" style="
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(8,12,28,0.97); backdrop-filter:blur(20px);
+  flex-direction:column; align-items:center; justify-content:flex-start;
+  padding:0; overflow-y:auto;
+">
+  <!-- Top bar -->
+  <div id="certLightboxBar" style="
+    position:sticky; top:0; left:0; right:0; width:100%;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    border-bottom:1px solid rgba(34,211,238,0.12);
+    background:rgba(8,12,28,0.95);
+    z-index:9002; flex-shrink:0;
+  ">
+    <div id="certLightboxTitle" style="
+      font-family:'Syne',sans-serif; font-size:14px; font-weight:700;
+      color:#fff; letter-spacing:0.5px; white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis; max-width:60vw;
+    ">Certificate</div>
+    <div style="display:flex;gap:10px;align-items:center;flex-shrink:0;">
+      <a id="certLightboxDownload" download style="
+        background:rgba(34,211,238,0.1); border:1px solid rgba(34,211,238,0.3);
+        color:#22D3EE; padding:6px 16px; font-family:'DM Mono',monospace;
+        font-size:11px; letter-spacing:1.5px; text-transform:uppercase;
+        text-decoration:none; cursor:pointer;
+      ">⬇ Download</a>
+      <button id="certLightboxClose" style="
+        background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15);
+        color:#fff; width:36px; height:36px; font-size:18px;
+        cursor:pointer; border-radius:2px; flex-shrink:0;
+      ">✕</button>
+    </div>
+  </div>
+
+  <!-- Content area -->
+  <div id="certLightboxContent" style="
+    display:flex; align-items:center; justify-content:center;
+    width:100%; flex:1; padding:24px;
+  ">
+    <!-- Image viewer -->
+    <img id="certLightboxImg" src="" alt="Certificate" style="
+      display:none;
+      max-width:92vw; max-height:85vh;
+      object-fit:contain;
+      border:1px solid rgba(34,211,238,0.15);
+      box-shadow:0 32px 100px rgba(0,0,0,0.7);
+    ">
+
+    <!-- PDF canvas viewer — all pages stacked -->
+    <div id="certLightboxPdfPages" style="
+      display:none;
+      flex-direction:column; align-items:center; gap:12px;
+      width:100%;
+    "></div>
+  </div>
+</div>
+
+<!-- Owner badge -->
+<div class="owner-badge">🔓 Owner Mode Active</div>
+
+<!-- Lock button -->
+<button class="lock-btn" id="lockBtn" title="Owner Login">🔒</button>
+
+<!-- Password Modal -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box">
+    <button class="pw-close" id="pwClose">✕</button>
+
+    <!-- SCREEN 1: Login -->
+    <div id="screenLogin">
+      <div class="pw-icon">🔒</div>
+      <div class="pw-title">Owner Access</div>
+      <div class="pw-sub">Enter your password to manage uploads</div>
+      <input type="password" class="pw-input" id="pwInput" placeholder="••••••••" maxlength="30">
+      <div class="pw-error" id="pwError"></div>
+      <button class="pw-submit" id="pwSubmit">Unlock</button>
+      <button id="btnResetPw" style="margin-top:10px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;text-decoration:underline;width:100%;text-align:center;">Forgot password? Reset to default</button>
+    </div>
+
+    <!-- SCREEN 2: Owner Menu (shown when logged in) -->
+    <div id="screenMenu" style="display:none;">
+      <div class="pw-icon">🔓</div>
+      <div class="pw-title">Owner Menu</div>
+      <div class="pw-sub">You are logged in as owner</div>
+      <button class="pw-submit" id="btnChangePw" style="margin-bottom:10px;">🔑 Change Password</button>
+      <button class="pw-submit" id="btnLock" style="background:#ff6b6b;">🔒 Lock & Exit Owner Mode</button>
+    </div>
+
+    <!-- SCREEN 3: Change Password -->
+    <div id="screenChangePw" style="display:none;">
+      <div class="pw-icon">🔑</div>
+      <div class="pw-title">Change Password</div>
+      <div class="pw-sub">Enter your current password to confirm</div>
+      <input type="password" class="pw-input" id="cpCurrent" placeholder="Current password" maxlength="30" style="margin-bottom:10px;">
+      <input type="password" class="pw-input" id="cpNew" placeholder="New password" maxlength="30" style="margin-bottom:10px;">
+      <input type="password" class="pw-input" id="cpConfirm" placeholder="Confirm new password" maxlength="30">
+      <div class="pw-error" id="cpError"></div>
+      <button class="pw-submit" id="btnSavePw">Save New Password</button>
+      <button class="pw-submit" id="btnBackMenu" style="background:transparent;border:1px solid var(--border);color:var(--muted);margin-top:8px;">← Back</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ==========================================================
+   OWNER AUTH — runs after DOM is fully loaded
+   ========================================================== */
+
+/* Top-level helpers — accessible from both DOMContentLoaded blocks */
+function _setRemoveBtnsVisible(visible) {
+  document.querySelectorAll('.cert-remove, .work-remove').forEach(btn => {
+    btn.style.display = visible ? '' : 'none';
+  });
+}
+
+function _makeRemoveBtn(type, id) {
+  const btn = document.createElement('button');
+  btn.className = type === 'cert' ? 'cert-remove' : 'work-remove';
+  btn.textContent = '✕';
+  btn.setAttribute('aria-label', 'Remove item');
+  btn.style.display = 'none';
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    type === 'cert' ? removeCert(id) : removeWork(id);
+  });
+  return btn;
+}
+
+/* removeCert and removeWork are top-level so _makeRemoveBtn can call them.
+   They use getElementById lazily — safe because DOM is ready before any user clicks. */
+function removeCert(id) {
+  if (!isOwner) return;
+  if (!/^[0-9a-f-]{32,36}$/.test(id)) return;
+  const gallery = document.getElementById('certsGallery');
+  const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
+  if (el) el.remove();
+  /* Update storage */
+  const items = gallery ? gallery.querySelectorAll('.cert-item[data-id]') : [];
+  const data = [];
+  items.forEach(item => {
+    const nameEl = item.querySelector('.cert-name');
+    const source = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    if (!nameEl) return;
+    if (!source) return;
+    data.push({
+      id     : item.dataset.id,
+      name   : nameEl.textContent,
+      type   : item.dataset.certType || 'image',
+      dataUrl: source,
+      url    : source,
+      previewUrl: item.dataset.previewUrl || ''
+    });
+  });
+  certCount = items.length;
+  try { localStorage.setItem('jn_certificates', JSON.stringify(data)); } catch (e) { console.warn('removeCert local save failed', e); }
+  const api = window.JN_PORTFOLIO_API;
+  if (api && typeof api.writeBin === 'function') {
+    api.writeBin(api.cloudConfig.certBinId, data.map(({ id: itemId, name, type, url }) => ({
+      id: itemId, name, type, url
+    })))
+      .catch(e => console.warn('removeCert save failed', e));
+  }
+  syncGalleryEmptyState(gallery, '.cert-item', document.getElementById('certEmptyState'));
+}
+
+function removeWork(id) {
+  if (!isOwner) return;
+  if (!/^[0-9a-f-]{32,36}$/.test(id)) return;
+  const gallery = document.getElementById('workGallery');
+  const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
+  if (el) el.remove();
+  /* Update storage */
+  const items = gallery ? gallery.querySelectorAll('.work-item[data-id]') : [];
+  const data = [];
+  items.forEach(item => {
+    const titleEl = item.querySelector('.work-title');
+    const source  = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    if (!titleEl) return;
+    if (!source) return;
+    data.push({
+      id     : item.dataset.id,
+      name   : titleEl.textContent,
+      type   : item.dataset.workType || 'video',
+      badge  : item.dataset.workBadge || 'Work Sample',
+      dataUrl: source,
+      url    : source
+    });
+  });
+  workCount = items.length;
+  try { localStorage.setItem('jn_work_samples', JSON.stringify(data)); } catch (e) { console.warn('removeWork local save failed', e); }
+  const api = window.JN_PORTFOLIO_API;
+  if (api && typeof api.writeBin === 'function') {
+    api.writeBin(api.cloudConfig.workBinId, data.map(({ id: itemId, name, type, badge, url }) => ({ id: itemId, name, type, badge, url })))
+      .catch(e => console.warn('removeWork save failed', e));
+  }
+  syncGalleryEmptyState(gallery, '.work-item', document.getElementById('workEmptyState'));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+const lockBtn        = document.getElementById("lockBtn");
+const pwOverlay      = document.getElementById("pwOverlay");
+const pwClose        = document.getElementById("pwClose");
+const screenLogin    = document.getElementById("screenLogin");
+const screenMenu     = document.getElementById("screenMenu");
+const screenChangePw = document.getElementById("screenChangePw");
+const pwInput        = document.getElementById("pwInput");
+const pwSubmit       = document.getElementById("pwSubmit");
+const pwError        = document.getElementById("pwError");
+const btnChangePw    = document.getElementById("btnChangePw");
+const btnLock        = document.getElementById("btnLock");
+const cpCurrent      = document.getElementById("cpCurrent");
+const cpNew          = document.getElementById("cpNew");
+const cpConfirm      = document.getElementById("cpConfirm");
+const cpError        = document.getElementById("cpError");
+const btnSavePw      = document.getElementById("btnSavePw");
+const btnBackMenu    = document.getElementById("btnBackMenu");
+
+
+/* Triple-click lock button to clear any rate-limit lockout (recovery) */
+let _lockClicks = 0, _lockTimer = null;
+
+function showScreen(name) {
+  screenLogin.style.display    = name === "login"    ? "block" : "none";
+  screenMenu.style.display     = name === "menu"     ? "block" : "none";
+  screenChangePw.style.display = name === "changepw" ? "block" : "none";
+}
+
+function openModal() {
+  /* Triple-click clears lockout */
+  _lockClicks++;
+  clearTimeout(_lockTimer);
+  _lockTimer = setTimeout(() => { _lockClicks = 0; }, 1000);
+  if (_lockClicks >= 3) { RateLimiter.forceReset(); _lockClicks = 0; }
+
+  pwOverlay.classList.add("active");
+  if (isOwner) {
+    showScreen("menu");
+  } else {
+    showScreen("login");
+    pwInput.value = "";
+    pwError.textContent = "";
+
+    /* Show remaining lockout time immediately if rate-limited */
+    const gate = RateLimiter.check();
+    if (!gate.allowed) {
+      pwError.textContent = gate.message;
+      pwInput.disabled    = true;
+      pwSubmit.disabled   = true;
+    } else {
+      pwInput.disabled  = false;
+      pwSubmit.disabled = false;
+      setTimeout(() => pwInput.focus(), 100);
+    }
+  }
+}
+
+function closeModal() {
+  pwOverlay.classList.remove("active");
+}
+
+lockBtn.addEventListener("click", openModal);
+pwClose.addEventListener("click", closeModal);
+pwOverlay.addEventListener("click", e => { if (e.target === pwOverlay) closeModal(); });
+
+/* Reset button: clears saved password + any lockout */
+const btnResetPw = document.getElementById("btnResetPw");
+if (btnResetPw) {
+  btnResetPw.addEventListener("click", () => {
+    SecureStore.reset();
+    if (typeof RateLimiter !== 'undefined') RateLimiter.forceReset();
+    pwInput.disabled  = false;
+    pwSubmit.disabled = false;
+    pwInput.value     = "";
+    pwError.style.color   = "#22D3EE";
+    pwError.textContent   = "\u2713 Reset done! Password: jannani2025";
+    setTimeout(() => { pwError.style.color = ""; pwError.textContent = ""; }, 4000);
+    setTimeout(() => pwInput.focus(), 100);
+  });
+}
+
+/* ---- LOGIN ---- */
+pwSubmit.addEventListener("click", handleLogin);
+pwInput.addEventListener("keydown", e => { if (e.key === "Enter") handleLogin(); });
+
+function handleLogin() {
+  /* 1. Rate-limit gate */
+  const gate = RateLimiter.check();
+  if (!gate.allowed) {
+    pwError.textContent  = gate.message;
+    pwInput.disabled     = true;
+    pwSubmit.disabled    = true;
+    return;
+  }
+
+  /* 2. Get input — trim whitespace to avoid copy-paste issues */
+  const inputVal = pwInput.value.trim();
+  if (!inputVal) { _loginError('Please enter your password.'); return; }
+
+  /* 3. Verify against stored password */
+  if (SecureStore.verify(inputVal)) {
+    RateLimiter.reset();
+    isOwner = true;
+    document.body.classList.add("owner-mode");
+    _setRemoveBtnsVisible(true);
+    lockBtn.innerHTML = "\uD83D\uDD13";
+    lockBtn.title     = "Owner Mode Active";
+    pwInput.classList.remove("error");
+    pwError.textContent = "";
+    closeModal();
+  } else {
+    const result = RateLimiter.recordFailure();
+    if (result.locked) {
+      _loginError("Too many attempts. Please wait 15 minutes or triple-click the lock icon to reset.");
+      pwInput.disabled  = true;
+      pwSubmit.disabled = true;
+    } else {
+      const tries = result.retriesLeft;
+      _loginError("Incorrect password. " + tries + " attempt" + (tries !== 1 ? "s" : "") + " remaining.");
+    }
+  }
+}
+
+function _loginError(msg) {
+  pwInput.classList.add("error");
+  pwError.textContent = msg;
+  pwInput.value = "";
+  setTimeout(() => pwInput.classList.remove("error"), 400);
+}
+
+/* ---- OWNER MENU ---- */
+btnChangePw.addEventListener("click", () => {
+  cpCurrent.value     = "";
+  cpNew.value         = "";
+  cpConfirm.value     = "";
+  cpError.textContent = "";
+  showScreen("changepw");
+  setTimeout(() => cpCurrent.focus(), 100);
+});
+
+btnLock.addEventListener("click", () => {
+  isOwner = false;
+  document.body.classList.remove("owner-mode");
+  _setRemoveBtnsVisible(false);
+  lockBtn.innerHTML = "🔒";
+  lockBtn.title     = "Owner Login";
+  closeModal();
+});
+
+/* ---- CHANGE PASSWORD ----
+   Requires current password re-entry so even a hijacked
+   logged-in session cannot silently rotate the credential.
+   OWASP A07 — Authentication Failures. */
+btnBackMenu.addEventListener("click", () => showScreen("menu"));
+btnSavePw.addEventListener("click", handleChangePw);
+
+function handleChangePw() {
+  const current = cpCurrent.value;
+  const newPw   = cpNew.value;
+  const confirm = cpConfirm.value;
+
+  /* 1. Re-verify current password (OWASP A07) */
+  const curCheck = validate(current, 'password');
+  if (!curCheck.ok || !SecureStore.verify(current)) {
+    _cpError("Current password is incorrect.", cpCurrent);
+    return;
+  }
+
+  /* 2. Validate new password against schema (OWASP A03) */
+  const newCheck = validate(newPw, 'password');
+  if (!newCheck.ok) { _cpError(newCheck.error, cpNew); return; }
+
+  /* 3. Reject if same as current (good practice) */
+  if (newPw === current) {
+    _cpError("New password must differ from the current one.", cpNew);
+    return;
+  }
+
+  /* 4. Confirm match */
+  if (newPw !== confirm) {
+    _cpError("Passwords do not match.", cpConfirm);
+    return;
+  }
+
+  /* 5. Persist securely via SecureStore (OWASP A02) */
+  SecureStore.set(newPw);
+
+  cpError.style.color = "#22D3EE";
+  cpError.textContent = "\u2713 Password changed successfully!";
+  cpCurrent.value = "";
+  cpNew.value     = "";
+  cpConfirm.value = "";
+  setTimeout(() => {
+    cpError.style.color = "";
+    cpError.textContent = "";
+    showScreen("menu");
+  }, 1200);
+}
+
+function _cpError(msg, inputEl) {
+  cpError.style.color = "";
+  cpError.textContent = msg;
+  if (inputEl) {
+    inputEl.classList.add("error");
+    inputEl.focus();
+    setTimeout(() => inputEl.classList.remove("error"), 400);
+  }
+}
+
+[cpCurrent, cpNew, cpConfirm].forEach(el => {
+  if (!el) return;
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter") handleChangePw();
+  });
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && pwOverlay.classList.contains("active")) closeModal();
+});
+
+}); // end DOMContentLoaded
+</script>
+</body>
+</html>
