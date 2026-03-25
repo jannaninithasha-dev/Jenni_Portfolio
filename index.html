@@ -1981,6 +1981,78 @@ function showToast(msg, type = 'error') {
   setTimeout(() => t.remove(), 4000);
 }
 
+function showOwnerDuplicateMessage(message) {
+  showToast(message, 'error');
+  const existing = document.getElementById('jn-owner-info');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'jn-owner-info';
+  overlay.style.cssText = `
+    position:fixed; inset:0; z-index:10001;
+    background:rgba(5, 10, 24, 0.72);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  `;
+
+  const panel = document.createElement('div');
+  panel.style.cssText = `
+    width:min(460px, 92vw);
+    background:#111a31;
+    border:1px solid rgba(34,211,238,0.28);
+    box-shadow:0 24px 80px rgba(0,0,0,0.45);
+    padding:22px 20px 18px;
+    text-align:center;
+  `;
+
+  const title = document.createElement('div');
+  title.textContent = 'File Already Exists';
+  title.style.cssText = `
+    color:#22D3EE;
+    font-family:'Syne',sans-serif;
+    font-size:22px;
+    font-weight:700;
+    margin-bottom:10px;
+  `;
+
+  const body = document.createElement('div');
+  body.textContent = message;
+  body.style.cssText = `
+    color:#E5EDF7;
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+    line-height:1.7;
+    letter-spacing:0.5px;
+    margin-bottom:16px;
+  `;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = 'OK';
+  button.style.cssText = `
+    background:#22D3EE;
+    color:#0F172A;
+    border:none;
+    padding:10px 22px;
+    font-family:'DM Mono',monospace;
+    font-size:12px;
+    letter-spacing:1px;
+    cursor:pointer;
+  `;
+
+  const closeOverlay = () => overlay.remove();
+  button.addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeOverlay();
+  });
+
+  panel.appendChild(title);
+  panel.appendChild(body);
+  panel.appendChild(button);
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+}
+
 /* ==========================================================
    DOM-DEPENDENT CODE — wrapped in DOMContentLoaded so every
    getElementById() is guaranteed to find its element.
@@ -2086,15 +2158,115 @@ const CLOUD_CONFIG = {
   workBinId    : '69c276dac3097a1dd5557734',      /* bin ID for work samples  */
 };
 
+const NETWORK_CONFIG = {
+  requestTimeoutMs: 12000,
+  uploadTimeoutMs : 45000,
+  retryDelayMs    : 800,
+  maxReadAttempts : 2,
+  sharedCacheTtlMs: 30000
+};
+
+const sharedBinReads  = new Map();
+const sharedBinWrites = new Map();
+const sharedBinCache  = new Map();
+const sharedBinVersions = new Map();
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function cloneEntryList(data) {
+  return Array.isArray(data)
+    ? data.map(entry => (entry && typeof entry === 'object') ? { ...entry } : entry)
+    : [];
+}
+
+function fetchWithTimeout(url, options = {}, timeoutMs = NETWORK_CONFIG.requestTimeoutMs) {
+  const controller = new AbortController();
+  const timeoutId  = window.setTimeout(() => controller.abort(), timeoutMs);
+  const { signal, ...rest } = options;
+
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  return fetch(url, { ...rest, signal: controller.signal })
+    .finally(() => window.clearTimeout(timeoutId));
+}
+
+function getSharedCacheKey(binId) {
+  return `jn_shared_cache_${binId}`;
+}
+
+function getBinVersion(binId) {
+  return sharedBinVersions.get(binId) || 0;
+}
+
+function bumpBinVersion(binId) {
+  const nextVersion = getBinVersion(binId) + 1;
+  sharedBinVersions.set(binId, nextVersion);
+  return nextVersion;
+}
+
+function readBinCache(binId, allowStale = false) {
+  const now = Date.now();
+  const fromMemory = sharedBinCache.get(binId);
+  if (fromMemory && (allowStale || (now - fromMemory.ts) <= NETWORK_CONFIG.sharedCacheTtlMs)) {
+    return cloneEntryList(fromMemory.data);
+  }
+
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(getSharedCacheKey(binId)) || 'null');
+    if (!cached || !Array.isArray(cached.data)) return null;
+    if (!allowStale && (now - Number(cached.ts || 0)) > NETWORK_CONFIG.sharedCacheTtlMs) return null;
+    sharedBinCache.set(binId, { ts: Number(cached.ts || now), data: cloneEntryList(cached.data) });
+    return cloneEntryList(cached.data);
+  } catch {
+    return null;
+  }
+}
+
+function writeBinCache(binId, data) {
+  const entry = { ts: Date.now(), data: cloneEntryList(data) };
+  sharedBinCache.set(binId, entry);
+  try { sessionStorage.setItem(getSharedCacheKey(binId), JSON.stringify(entry)); } catch {}
+  return cloneEntryList(entry.data);
+}
+
+async function getLatestBinSnapshot(binId, fallback = []) {
+  const pendingWrite = sharedBinWrites.get(binId);
+  if (pendingWrite) {
+    try { await pendingWrite; } catch {}
+  }
+  const cached = readBinCache(binId, true);
+  return cached || cloneEntryList(fallback);
+}
+
+async function withRetry(task, attempts = NETWORK_CONFIG.maxReadAttempts) {
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await task(attempt);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= attempts) break;
+      await delay(NETWORK_CONFIG.retryDelayMs * attempt);
+    }
+  }
+  throw lastError;
+}
+
 /* Upload file to Cloudinary; returns { url, publicId } */
 async function uploadToCloudinary(file, folder) {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', CLOUD_CONFIG.uploadPreset);
   fd.append('folder', folder);
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `https://api.cloudinary.com/v1_1/${CLOUD_CONFIG.cloudName}/auto/upload`,
-    { method: 'POST', body: fd }
+    { method: 'POST', body: fd },
+    NETWORK_CONFIG.uploadTimeoutMs
   );
   if (!res.ok) throw new Error('Cloudinary upload failed: ' + res.status);
   return await res.json();
@@ -2102,29 +2274,69 @@ async function uploadToCloudinary(file, folder) {
 
 /* Read a JSONBin; returns the array stored inside */
 async function readBin(binId) {
-  const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-    headers: { 'X-Access-Key': CLOUD_CONFIG.jsonbinKey }
+  if (sharedBinWrites.has(binId)) {
+    return getLatestBinSnapshot(binId);
+  }
+  if (sharedBinReads.has(binId)) {
+    return sharedBinReads.get(binId);
+  }
+
+  const cachedFallback = readBinCache(binId, true);
+  const readVersion = getBinVersion(binId);
+  const request = withRetry(async () => {
+    const res = await fetchWithTimeout(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Access-Key': CLOUD_CONFIG.jsonbinKey }
+    });
+    if (!res.ok) throw new Error(`JSONBin read failed (${res.status})`);
+    const json = await res.json();
+    const rec = json.record;
+    const items = Array.isArray(rec) ? rec : (Array.isArray(rec?.items) ? rec.items : []);
+    if (getBinVersion(binId) !== readVersion || sharedBinWrites.has(binId)) {
+      return getLatestBinSnapshot(binId, items);
+    }
+    return writeBinCache(binId, items);
   });
-  if (!res.ok) throw new Error(`JSONBin read failed (${res.status})`);
-  const json = await res.json();
-  const rec = json.record; return Array.isArray(rec) ? rec : (Array.isArray(rec?.items) ? rec.items : []);
+
+  sharedBinReads.set(binId, request);
+  try {
+    return await request;
+  } catch (error) {
+    if (cachedFallback) return cachedFallback;
+    throw error;
+  } finally {
+    if (sharedBinReads.get(binId) === request) sharedBinReads.delete(binId);
+  }
 }
 
 /* Overwrite a JSONBin with a new array */
 async function writeBin(binId, data) {
-  const payload = Array.isArray(data) ? { items: data } : data;
-  const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
-    method : 'PUT',
-    headers: { 'Content-Type': 'application/json', 'X-Access-Key': CLOUD_CONFIG.jsonbinKey },
-    body   : JSON.stringify(payload)
+  const items = cloneEntryList(Array.isArray(data) ? data : []);
+  const payload = { items };
+  bumpBinVersion(binId);
+  sharedBinReads.delete(binId);
+  const previous = sharedBinWrites.get(binId) || Promise.resolve();
+  const next = previous.catch(() => {}).then(async () => {
+    const res = await fetchWithTimeout(`https://api.jsonbin.io/v3/b/${binId}`, {
+      method : 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Access-Key': CLOUD_CONFIG.jsonbinKey },
+      body   : JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '');
+      throw new Error(`JSONBin write failed (${res.status})${detail ? `: ${detail}` : ''}`);
+    }
+    writeBinCache(binId, items);
   });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '');
-    throw new Error(`JSONBin write failed (${res.status})${detail ? `: ${detail}` : ''}`);
+
+  sharedBinWrites.set(binId, next);
+  try {
+    await next;
+  } finally {
+    if (sharedBinWrites.get(binId) === next) sharedBinWrites.delete(binId);
   }
 }
 
-window.JN_PORTFOLIO_API = { cloudConfig: CLOUD_CONFIG, readBin, writeBin };
+window.JN_PORTFOLIO_API = { cloudConfig: CLOUD_CONFIG, networkConfig: NETWORK_CONFIG, readBin, writeBin };
 
 function clearGalleryItems(galleryEl, itemSelector) {
   if (!galleryEl) return;
@@ -2186,6 +2398,53 @@ function certEntryFingerprint(entry) {
   ].join('|');
 }
 
+function certEntryIdentity(entry) {
+  if (!entry) return '';
+  const fileKey = String(entry.fileKey || '').trim().toLowerCase();
+  if (fileKey) return `file:${fileKey}`;
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase(),
+    canonicaliseAssetUrl(entry.url || entry.dataUrl || '')
+  ].join('|');
+}
+
+function certEntrySlot(entry) {
+  if (!entry) return '';
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase()
+  ].join('|');
+}
+
+function workEntrySlot(entry) {
+  if (!entry) return '';
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase()
+  ].join('|');
+}
+
+function workEntryIdentity(entry) {
+  if (!entry) return '';
+  const fileKey = String(entry.fileKey || '').trim().toLowerCase();
+  if (fileKey) return `file:${fileKey}`;
+  return [
+    String(entry.name || '').trim().toLowerCase(),
+    String(entry.type || '').trim().toLowerCase(),
+    canonicaliseAssetUrl(entry.url || entry.dataUrl || '')
+  ].join('|');
+}
+
+function buildFileKey(name, type, size = 0, lastModified = 0) {
+  return [
+    String(name || '').trim().toLowerCase(),
+    String(type || '').trim().toLowerCase(),
+    Number(size) || 0,
+    Number(lastModified) || 0
+  ].join('|');
+}
+
 function workEntryFingerprint(entry) {
   if (!entry) return '';
   return [
@@ -2207,6 +2466,56 @@ function dedupeEntries(entries, fingerprintFn) {
     deduped.push(entry);
   });
   return deduped;
+}
+
+function collapseCertEntries(entries, preferLast = false) {
+  const list = Array.isArray(entries) ? entries : [];
+  const seen = new Set();
+  const collapsed = [];
+
+  if (preferLast) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const entry = list[i];
+      const key = certEntrySlot(entry) || certEntryIdentity(entry) || certEntryFingerprint(entry);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      collapsed.unshift(entry);
+    }
+    return collapsed;
+  }
+
+  list.forEach(entry => {
+    const key = certEntrySlot(entry) || certEntryIdentity(entry) || certEntryFingerprint(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    collapsed.push(entry);
+  });
+  return collapsed;
+}
+
+function collapseWorkEntries(entries, preferLast = false) {
+  const list = Array.isArray(entries) ? entries : [];
+  const seen = new Set();
+  const collapsed = [];
+
+  if (preferLast) {
+    for (let i = list.length - 1; i >= 0; i--) {
+      const entry = list[i];
+      const key = workEntrySlot(entry) || workEntryIdentity(entry) || workEntryFingerprint(entry);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      collapsed.unshift(entry);
+    }
+    return collapsed;
+  }
+
+  list.forEach(entry => {
+    const key = workEntrySlot(entry) || workEntryIdentity(entry) || workEntryFingerprint(entry);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    collapsed.push(entry);
+  });
+  return collapsed;
 }
 
 function mergeEntries(rawEntries, normalizeEntry, fingerprintFn, remoteRawEntries = []) {
@@ -2236,6 +2545,26 @@ function sameWorkEntry(a, b) {
   return workEntryFingerprint(a) === workEntryFingerprint(b);
 }
 
+function hasCertIdentity(entries, identityKey) {
+  if (!identityKey) return false;
+  return (Array.isArray(entries) ? entries : []).some(entry => certEntryIdentity(entry) === identityKey);
+}
+
+function hasWorkIdentity(entries, identityKey) {
+  if (!identityKey) return false;
+  return (Array.isArray(entries) ? entries : []).some(entry => workEntryIdentity(entry) === identityKey);
+}
+
+function hasVisibleCertDuplicate(name, type) {
+  const targetKey = certEntrySlot({ name, type });
+  return !!targetKey && collectCertEntries().some(entry => certEntrySlot(entry) === targetKey);
+}
+
+function hasVisibleWorkDuplicate(name, type) {
+  const targetKey = workEntrySlot({ name, type });
+  return !!targetKey && collectWorkEntries().some(entry => workEntrySlot(entry) === targetKey);
+}
+
 function getDownloadBaseName(name, fallback = 'certificate') {
   return ((name || fallback).trim().replace(/[^\w.-]+/g, '_') || fallback);
 }
@@ -2258,14 +2587,14 @@ function bytesLookLikePdf(bytes) {
 }
 
 async function fetchRemoteBytes(url) {
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetchWithTimeout(url, { cache: 'force-cache' });
   if (!res.ok) throw new Error(`Remote fetch failed (${res.status})`);
   const buffer = await res.arrayBuffer();
   return { bytes: new Uint8Array(buffer), contentType: String(res.headers.get('content-type') || '').toLowerCase() };
 }
 
 async function fetchRemoteBlobUrl(url, expectedTypePrefix = '') {
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetchWithTimeout(url, { cache: 'force-cache' });
   if (!res.ok) throw new Error(`Remote fetch failed (${res.status})`);
   const blob = await res.blob();
   const blobType = String(blob.type || '').toLowerCase();
@@ -2295,6 +2624,7 @@ function normaliseCertEntry(entry) {
     type   : inferCertType(entry, source),
     dataUrl: source,
     url    : (typeof entry.cloudUrl === 'string' && entry.cloudUrl.trim()) ? entry.cloudUrl.trim() : source,
+    fileKey: typeof entry.fileKey === 'string' && entry.fileKey.trim() ? entry.fileKey.trim().toLowerCase() : '',
     previewUrl: derivePdfPreviewUrl(
       source,
       (typeof entry.previewUrl === 'string' && entry.previewUrl.trim())
@@ -2317,10 +2647,11 @@ function collectCertEntries() {
       type   : item.dataset.certType || 'image',
       dataUrl: source,
       url    : source,
+      fileKey: item.dataset.fileKey || '',
       previewUrl: item.dataset.previewUrl || ''
     });
   });
-  return dedupeEntries(data, certEntryFingerprint);
+  return collapseCertEntries(dedupeEntries(data, certEntryFingerprint), true);
 }
 
 function inferWorkType(entry, source) {
@@ -2344,7 +2675,8 @@ function normaliseWorkEntry(entry) {
     type   : inferWorkType(entry, source),
     badge  : sanitise(String(entry.badge || entry.workBadge || 'Work Sample').trim() || 'Work Sample'),
     dataUrl: source,
-    url    : (typeof entry.cloudUrl === 'string' && entry.cloudUrl.trim()) ? entry.cloudUrl.trim() : source
+    url    : (typeof entry.cloudUrl === 'string' && entry.cloudUrl.trim()) ? entry.cloudUrl.trim() : source,
+    fileKey: typeof entry.fileKey === 'string' && entry.fileKey.trim() ? entry.fileKey.trim().toLowerCase() : ''
   };
 }
 
@@ -2361,10 +2693,11 @@ function collectWorkEntries() {
       type   : item.dataset.workType || 'video',
       badge  : item.dataset.workBadge || 'Work Sample',
       dataUrl: source,
-      url    : source
+      url    : source,
+      fileKey: item.dataset.fileKey || ''
     });
   });
-  return dedupeEntries(data, workEntryFingerprint);
+  return collapseWorkEntries(dedupeEntries(data, workEntryFingerprint), true);
 }
 
 function renderCertEntries(entries) {
@@ -2372,7 +2705,7 @@ function renderCertEntries(entries) {
   certCount = 0;
   (Array.isArray(entries) ? entries : []).forEach(entry => {
     certCount++;
-    _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl);
+    _renderCertCard(entry.id, entry.name, entry.type, entry.dataUrl, entry.url, entry.previewUrl, entry.fileKey || '');
   });
 }
 
@@ -2381,7 +2714,7 @@ function renderWorkEntries(entries) {
   workCount = 0;
   (Array.isArray(entries) ? entries : []).forEach(entry => {
     workCount++;
-    _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url);
+    _renderWorkCard(entry.id, entry.name, entry.type, entry.badge, entry.dataUrl, entry.url, entry.fileKey || '');
   });
 }
 
@@ -2393,8 +2726,8 @@ async function saveCertsToStorage() {
     showToast('Storage full — some certificates may not persist.');
   }
   try {
-    await writeBin(CLOUD_CONFIG.certBinId, data.map(({ id, name, type, url }) => ({
-      id, name, type, url
+    await writeBin(CLOUD_CONFIG.certBinId, data.map(({ id, name, type, url, fileKey }) => ({
+      id, name, type, url, fileKey: fileKey || ''
     })));
   } catch (e) {
     remoteSynced = false;
@@ -2412,8 +2745,9 @@ async function loadCertsFromStorage() {
   localData = readStoredList('jn_certificates');
 
   const localMerge = mergeEntries(localData, normaliseCertEntry, certEntryFingerprint);
-  if (localMerge.entries.length) {
-    renderCertEntries(localMerge.entries);
+  const localEntries = collapseCertEntries(localMerge.entries, true);
+  if (localEntries.length) {
+    renderCertEntries(localEntries);
     setGalleryLoading(certsGallery, false);
     syncCertEmptyState();
   }
@@ -2426,12 +2760,22 @@ async function loadCertsFromStorage() {
   }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
   localData = readStoredList('jn_certificates');
-  const { entries, remoteEntries } = mergeEntries(
-    [...remoteData, ...localData],
-    normaliseCertEntry,
-    certEntryFingerprint,
-    remoteData
+  const remoteMerge = mergeEntries(remoteData, normaliseCertEntry, certEntryFingerprint, remoteData);
+  const refreshedLocalMerge = mergeEntries(localData, normaliseCertEntry, certEntryFingerprint);
+  const remoteEntries = collapseCertEntries(remoteMerge.entries, true);
+  const localEntriesFinal = collapseCertEntries(refreshedLocalMerge.entries, true);
+  const entries = [...remoteEntries];
+  const seenCerts = new Set(
+    remoteEntries
+      .map(entry => certEntrySlot(entry) || certEntryIdentity(entry) || certEntryFingerprint(entry))
+      .filter(Boolean)
   );
+  localEntriesFinal.forEach(entry => {
+    const key = certEntrySlot(entry) || certEntryIdentity(entry) || certEntryFingerprint(entry);
+    if (key && seenCerts.has(key)) return;
+    if (key) seenCerts.add(key);
+    entries.push(entry);
+  });
 
   renderCertEntries(entries);
   const needsRemoteSync = remoteLoaded && (
@@ -2441,7 +2785,7 @@ async function loadCertsFromStorage() {
   );
   if (needsRemoteSync) {
     try {
-      await writeBin(CLOUD_CONFIG.certBinId, entries.map(({ id, name, type, url }) => ({ id, name, type, url })));
+      await writeBin(CLOUD_CONFIG.certBinId, entries.map(({ id, name, type, url, fileKey }) => ({ id, name, type, url, fileKey: fileKey || '' })));
     } catch (e) {
       console.warn('Cert recovery sync failed:', e);
     }
@@ -2497,6 +2841,11 @@ async function handleCertFiles(files) {
     const id   = safeId();
     const name = sanitise(file.name.replace(/\.[^.]+$/, ''));
     const type = file.type.startsWith('image/') ? 'image' : 'pdf';
+    const fileKey = buildFileKey(name, type, file.size, file.lastModified);
+    if (hasVisibleCertDuplicate(name, type)) {
+      showOwnerDuplicateMessage(name + ' already exists. Duplicate certificates are not allowed.');
+      continue;
+    }
     const previewUrl = type === 'pdf' ? await createPdfPreview(file) : '';
 
     showToast('Uploading ' + name + '…', 'success');
@@ -2504,7 +2853,7 @@ async function handleCertFiles(files) {
       const result = await uploadToCloudinary(file, 'jn_certs');
       const url    = result.secure_url;
       certCount++;
-      _renderCertCard(id, name, type, url, url, previewUrl);
+      _renderCertCard(id, name, type, url, url, previewUrl, fileKey);
       const remoteSynced = await saveCertsToStorage();
       uploadedAny = true;
       showToast(
@@ -2527,7 +2876,7 @@ async function handleCertFiles(files) {
  * _renderCertCard — builds and appends one certificate card.
  * Used both when uploading AND when loading from storage.
  */
-function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '') {
+function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '', fileKey = '') {
   const effectivePreviewUrl = type === 'pdf'
     ? derivePdfPreviewUrl(cloudUrl || dataUrl, previewUrl)
     : (previewUrl || '');
@@ -2537,6 +2886,7 @@ function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '') {
   item.dataset.certType = type;
   item.dataset.dataUrl  = dataUrl;
   item.dataset.cloudUrl = cloudUrl || dataUrl;
+  item.dataset.fileKey = fileKey || '';
   item.dataset.previewUrl = effectivePreviewUrl;
 
   /* Delete button — hidden from non-owners via CSS */
@@ -2551,6 +2901,8 @@ function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '') {
     const img = document.createElement('img');
     img.alt = name;
     img.src = dataUrl;                           /* data: URL renders immediately */
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.addEventListener('click', () => openCertLightbox(dataUrl, name, 'image'));
 
     /* Hover overlay */
@@ -2595,12 +2947,10 @@ function _renderCertCard(id, name, type, dataUrl, cloudUrl, previewUrl = '') {
       const img = document.createElement('img');
       img.alt = name;
       img.src = effectivePreviewUrl;
+      img.loading = 'lazy';
+      img.decoding = 'async';
       img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
-      const canvas = document.createElement('canvas');
-      canvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:none;';
       wrap.appendChild(img);
-      wrap.appendChild(canvas);
-      _renderPdfThumb(dataUrl, canvas, null, img);
     } else {
       /* Canvas where PDF first page will be drawn */
       const canvas = document.createElement('canvas');
@@ -2928,7 +3278,7 @@ document.addEventListener('keydown', e => {
 /* removeCert is defined at top level in script block 2 */
 
 /* Load persisted certs immediately on page start */
-loadCertsFromStorage();  /* async — runs in background */
+const certsReadyPromise = loadCertsFromStorage();  /* async — runs in background */
 
 /* ==========================================================
    WORK UPLOAD — hardened
@@ -2977,7 +3327,7 @@ async function saveWorkToStorage() {
     showToast('Storage full — some work samples may not persist.');
   }
   try {
-    await writeBin(CLOUD_CONFIG.workBinId, data.map(({ id, name, type, badge, url }) => ({ id, name, type, badge, url })));
+    await writeBin(CLOUD_CONFIG.workBinId, data.map(({ id, name, type, badge, url, fileKey }) => ({ id, name, type, badge, url, fileKey: fileKey || '' })));
   } catch (e) {
     remoteSynced = false;
     console.warn('Work sync failed:', e);
@@ -2994,8 +3344,9 @@ async function loadWorkFromStorage() {
   localData = readStoredList('jn_work_samples');
 
   const localMerge = mergeEntries(localData, normaliseWorkEntry, workEntryFingerprint);
-  if (localMerge.entries.length) {
-    renderWorkEntries(localMerge.entries);
+  const localEntries = collapseWorkEntries(localMerge.entries, true);
+  if (localEntries.length) {
+    renderWorkEntries(localEntries);
     setGalleryLoading(workGallery, false);
     syncWorkEmptyState();
   }
@@ -3008,12 +3359,22 @@ async function loadWorkFromStorage() {
   }
   remoteData = Array.isArray(remoteData) ? remoteData : [];
   localData = readStoredList('jn_work_samples');
-  const { entries, remoteEntries } = mergeEntries(
-    [...remoteData, ...localData],
-    normaliseWorkEntry,
-    workEntryFingerprint,
-    remoteData
+  const remoteMerge = mergeEntries(remoteData, normaliseWorkEntry, workEntryFingerprint, remoteData);
+  const refreshedLocalMerge = mergeEntries(localData, normaliseWorkEntry, workEntryFingerprint);
+  const remoteEntries = collapseWorkEntries(remoteMerge.entries, true);
+  const localEntriesFinal = collapseWorkEntries(refreshedLocalMerge.entries, true);
+  const entries = [...remoteEntries];
+  const seenWork = new Set(
+    remoteEntries
+      .map(entry => workEntrySlot(entry) || workEntryIdentity(entry) || workEntryFingerprint(entry))
+      .filter(Boolean)
   );
+  localEntriesFinal.forEach(entry => {
+    const key = workEntrySlot(entry) || workEntryIdentity(entry) || workEntryFingerprint(entry);
+    if (key && seenWork.has(key)) return;
+    if (key) seenWork.add(key);
+    entries.push(entry);
+  });
 
   renderWorkEntries(entries);
   const needsRemoteSync = remoteLoaded && (
@@ -3023,7 +3384,7 @@ async function loadWorkFromStorage() {
   );
   if (needsRemoteSync) {
     try {
-      await writeBin(CLOUD_CONFIG.workBinId, entries.map(({ id, name, type, badge, url }) => ({ id, name, type, badge, url })));
+      await writeBin(CLOUD_CONFIG.workBinId, entries.map(({ id, name, type, badge, url, fileKey }) => ({ id, name, type, badge, url, fileKey: fileKey || '' })));
     } catch (e) {
       console.warn('Work recovery sync failed:', e);
     }
@@ -3059,13 +3420,18 @@ async function handleWorkFiles(files) {
     const name  = sanitise(file.name.replace(/\.[^.]+$/, ''));
     const badge = sanitise(getWorkBadge(file));
     const type  = file.type.startsWith('video/') ? 'video' : 'image';
+    const fileKey = buildFileKey(name, type, file.size, file.lastModified);
+    if (hasVisibleWorkDuplicate(name, type)) {
+      showOwnerDuplicateMessage(name + ' already exists. Duplicate work samples are not allowed.');
+      continue;
+    }
 
     showToast('Uploading ' + name + '…', 'success');
     try {
       const result = await uploadToCloudinary(file, 'jn_work');
       const url    = result.secure_url;
       workCount++;
-      _renderWorkCard(id, name, type, badge, url, url);
+      _renderWorkCard(id, name, type, badge, url, url, fileKey);
       const remoteSynced = await saveWorkToStorage();
       uploadedAny = true;
       showToast(
@@ -3084,7 +3450,7 @@ async function handleWorkFiles(files) {
   syncWorkEmptyState();
 }
 
-function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl) {
+function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl, fileKey = '') {
   const item = document.createElement('div');
   item.className        = 'work-item';
   item.dataset.id        = id;
@@ -3092,6 +3458,7 @@ function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl) {
   item.dataset.workBadge = badge;
   item.dataset.dataUrl   = dataUrl;
   item.dataset.cloudUrl  = cloudUrl || dataUrl;
+  item.dataset.fileKey   = fileKey || '';
 
   /* Delete button — hidden from non-owners via CSS + JS */
   const btn = _makeRemoveBtn('work', id);
@@ -3129,6 +3496,7 @@ function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl) {
     vid.preload  = 'metadata';
     vid.controls = false;
     vid.muted    = true;
+    vid.playsInline = true;
     /* Seek to 1s to show a meaningful thumbnail frame */
     vid.addEventListener('loadedmetadata', () => { vid.currentTime = 1; });
     vid.addEventListener('click', () => openWorkVideoPlayer(dataUrl, name));
@@ -3137,6 +3505,8 @@ function _renderWorkCard(id, name, type, badge, dataUrl, cloudUrl) {
     const img = document.createElement('img');
     img.src = dataUrl;
     img.alt = name;
+    img.loading = 'lazy';
+    img.decoding = 'async';
     img.addEventListener('click', () => {
       const win = window.open('', '_blank', 'noopener,noreferrer');
       if (win) win.location = dataUrl;
@@ -3246,7 +3616,7 @@ function openWorkVideoPlayer(dataUrl, name) {
 /* removeWork is defined at top level in script block 2 */
 
 /* Load persisted work samples on page start */
-loadWorkFromStorage();  /* async — runs in background */
+const workReadyPromise = loadWorkFromStorage();  /* async — runs in background */
 
 }); // end DOMContentLoaded
 </script>
@@ -3377,10 +3747,79 @@ function _makeRemoveBtn(type, id) {
   btn.setAttribute('aria-label', 'Remove item');
   btn.style.display = 'none';
   btn.addEventListener('click', e => {
+    e.preventDefault();
     e.stopPropagation();
     type === 'cert' ? removeCert(id) : removeWork(id);
   });
   return btn;
+}
+
+function _syncGalleryEmptyStateSafe(gallery, itemSelector, emptyStateEl) {
+  if (!gallery || !emptyStateEl) return;
+  emptyStateEl.style.display = gallery.querySelector(itemSelector) ? 'none' : 'flex';
+}
+
+function _certSlotFromElement(item) {
+  if (!item) return '';
+  return [
+    String(item.querySelector('.cert-name')?.textContent || '').trim().toLowerCase(),
+    String(item.dataset.certType || '').trim().toLowerCase()
+  ].join('|');
+}
+
+function _workSlotFromElement(item) {
+  if (!item) return '';
+  return [
+    String(item.querySelector('.work-title')?.textContent || '').trim().toLowerCase(),
+    String(item.dataset.workType || '').trim().toLowerCase()
+  ].join('|');
+}
+
+function _collectCertEntriesFromGallery(gallery) {
+  const data = [];
+  const seen = new Set();
+  if (!gallery) return data;
+
+  gallery.querySelectorAll('.cert-item[data-id]').forEach(item => {
+    const nameEl = item.querySelector('.cert-name');
+    const source = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    const slotKey = _certSlotFromElement(item);
+    if (!nameEl || !source || !slotKey || seen.has(slotKey)) return;
+    seen.add(slotKey);
+    data.push({
+      id: item.dataset.id,
+      name: nameEl.textContent,
+      type: item.dataset.certType || 'image',
+      url: source,
+      fileKey: item.dataset.fileKey || ''
+    });
+  });
+
+  return data;
+}
+
+function _collectWorkEntriesFromGallery(gallery) {
+  const data = [];
+  const seen = new Set();
+  if (!gallery) return data;
+
+  gallery.querySelectorAll('.work-item[data-id]').forEach(item => {
+    const titleEl = item.querySelector('.work-title');
+    const source = String(item.dataset.cloudUrl || item.dataset.dataUrl || '').trim();
+    const slotKey = _workSlotFromElement(item);
+    if (!titleEl || !source || !slotKey || seen.has(slotKey)) return;
+    seen.add(slotKey);
+    data.push({
+      id: item.dataset.id,
+      name: titleEl.textContent,
+      type: item.dataset.workType || 'video',
+      badge: item.dataset.workBadge || 'Work Sample',
+      url: source,
+      fileKey: item.dataset.fileKey || ''
+    });
+  });
+
+  return data;
 }
 
 /* removeCert and removeWork are top-level so _makeRemoveBtn can call them.
@@ -3388,45 +3827,59 @@ function _makeRemoveBtn(type, id) {
 async function removeCert(id) {
   if (!isOwner) return;
   const gallery = document.getElementById('certsGallery');
-  const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
-  if (el) el.remove();
+  const items = gallery ? Array.from(gallery.querySelectorAll('.cert-item[data-id]')) : [];
+  const el = items.find(item => String(item.dataset.id || '') === String(id)) || null;
+  const targetKey = _certSlotFromElement(el);
+  if (gallery) {
+    items.forEach(item => {
+      const itemKey = _certSlotFromElement(item);
+      if (item.dataset.id === id || (targetKey && itemKey === targetKey)) item.remove();
+    });
+  }
   /* Update storage */
-  const data = collectCertEntries();
+  const data = _collectCertEntriesFromGallery(gallery);
   certCount = data.length;
   try { localStorage.setItem('jn_certificates', JSON.stringify(data)); } catch (e) { console.warn('removeCert local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
     try {
-      await api.writeBin(api.cloudConfig.certBinId, data.map(({ id: itemId, name, type, url }) => ({
-        id: itemId, name, type, url
+      await api.writeBin(api.cloudConfig.certBinId, data.map(({ id: itemId, name, type, url, fileKey }) => ({
+        id: itemId, name, type, url, fileKey: fileKey || ''
       })));
     } catch (e) {
       console.warn('removeCert save failed', e);
       showToast('Certificate removed locally, but shared delete failed.');
     }
   }
-  syncGalleryEmptyState(gallery, '.cert-item', document.getElementById('certEmptyState'));
+  _syncGalleryEmptyStateSafe(gallery, '.cert-item', document.getElementById('certEmptyState'));
 }
 
 async function removeWork(id) {
   if (!isOwner) return;
   const gallery = document.getElementById('workGallery');
-  const el = gallery ? gallery.querySelector(`[data-id="${CSS.escape(id)}"]`) : null;
-  if (el) el.remove();
+  const items = gallery ? Array.from(gallery.querySelectorAll('.work-item[data-id]')) : [];
+  const el = items.find(item => String(item.dataset.id || '') === String(id)) || null;
+  const targetKey = _workSlotFromElement(el);
+  if (gallery) {
+    items.forEach(item => {
+      const itemKey = _workSlotFromElement(item);
+      if (item.dataset.id === id || (targetKey && itemKey === targetKey)) item.remove();
+    });
+  }
   /* Update storage */
-  const data = collectWorkEntries();
+  const data = _collectWorkEntriesFromGallery(gallery);
   workCount = data.length;
   try { localStorage.setItem('jn_work_samples', JSON.stringify(data)); } catch (e) { console.warn('removeWork local save failed', e); }
   const api = window.JN_PORTFOLIO_API;
   if (api && typeof api.writeBin === 'function') {
     try {
-      await api.writeBin(api.cloudConfig.workBinId, data.map(({ id: itemId, name, type, badge, url }) => ({ id: itemId, name, type, badge, url })));
+      await api.writeBin(api.cloudConfig.workBinId, data.map(({ id: itemId, name, type, badge, url, fileKey }) => ({ id: itemId, name, type, badge, url, fileKey: fileKey || '' })));
     } catch (e) {
       console.warn('removeWork save failed', e);
       showToast('Work sample removed locally, but shared delete failed.');
     }
   }
-  syncGalleryEmptyState(gallery, '.work-item', document.getElementById('workEmptyState'));
+  _syncGalleryEmptyStateSafe(gallery, '.work-item', document.getElementById('workEmptyState'));
 }
 
 document.addEventListener('DOMContentLoaded', () => {
